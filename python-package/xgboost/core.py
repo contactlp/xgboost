@@ -1235,7 +1235,7 @@ class Booster(object):
             Customized objective function.
 
         """
-        pint("update_method:",iteration)
+        print("update_method:",iteration)
         if not isinstance(dtrain, DMatrix):
             raise TypeError('invalid training matrix: {}'.format(
                 type(dtrain).__name__))
