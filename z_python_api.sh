@@ -27,4 +27,4 @@ $env/python3 setup.py install #--no-cache-dir
 $env/pip install -r requiremnets.txt
 
 #/usr/bin/python3 /home/lpatel/projects/repos/xgboost/z_xgboost_example.py
-$env/python3 /home/lpatel/projects/repos/xgboost/z_xgboost_aki_tesing_w0.py
+$env/python3 /home/lpatel/projects/repos/xgboost/z_python_api.py
