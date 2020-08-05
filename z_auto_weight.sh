@@ -1,1 +1,2 @@
 conda activate auto_weight
+python3 feature_importance_for_each_iteration.py
