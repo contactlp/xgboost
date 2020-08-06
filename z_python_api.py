@@ -39,11 +39,11 @@ train_csv = os.path.join(data_dir,'train_csv.csv')
 test_csv = os.path.join(data_dir,'test_csv.csv')
 weight_csv = os.path.join(data_dir,'weight_csv.csv')
 
-train = pd.read_csv(train_csv,
-        nrows=100
+train = pd.read_csv(train_csv
+        , nrows=100
         )
-test = pd.read_csv(test_csv,
-        nrows=100
+test = pd.read_csv(test_csv
+        , nrows=100
         )
 weight = pd.read_csv(weight_csv)
 #column names are formted inconsitantly 
