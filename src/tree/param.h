@@ -76,6 +76,9 @@ namespace xgboost
       // Stored as a JSON string.
       std::vector<int> colsample_bytree_weight;
       // Stored as a JSON string.
+
+      int colsample_bytree_weight_factor;
+
       std::string interaction_constraints;
 
       // the criteria to use for ranking splits
@@ -185,6 +188,9 @@ namespace xgboost
         DMLC_DECLARE_FIELD(colsample_bytree_weight)
             .set_default(std::vector<int>())
             .describe("colsample_bytree_weight");
+        DMLC_DECLARE_FIELD(colsample_bytree_weight_factor)
+            .set_default(10000)
+            .describe("colsample_bytree_weight_factor");
         DMLC_DECLARE_FIELD(interaction_constraints)
             .set_default("")
             .describe("Constraints for interaction representing permitted interactions."

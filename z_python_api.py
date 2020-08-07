@@ -80,7 +80,8 @@ model = xgb.XGBClassifier(
   subsample= 0.8,
   colsample_bytree= 0.5,
   seed= 1001,
-  colsample_bytree_weight=(1,5,3,1)
+  colsample_bytree_weight=(4,6),
+  colsample_bytree_weight_factor=10000
 )
 model.fit(X_train, y_train)
 print(model.get_xgb_params)

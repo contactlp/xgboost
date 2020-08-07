@@ -245,7 +245,7 @@ namespace xgboost
           {
             column_sampler_.Init(fmat.Info().num_col_, param_.colsample_bynode,
                                  param_.colsample_bylevel, param_.colsample_bytree,
-                                 false, param_.colsample_bytree_weight);
+                                 false, param_.colsample_bytree_weight, param_.colsample_bytree_weight_factor);
           }
           {
             // setup temp space for each thread
