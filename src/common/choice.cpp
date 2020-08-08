@@ -18,6 +18,17 @@ void printv(std::vector<VT> v)
     std::cout << "\n";
 }
 
+template <typename VT>
+void convert_vec_to_float(std::vector<int> colsample_bytree_weight, int colsample_bytree_weight_factor, std::vector<float> &output)
+{
+
+    for (int i = 0; i < colsample_bytree_weight.size(); i++)
+    {
+        float fi = static_cast<float>(colsample_bytree_weight.at(i)) / static_cast<float>(colsample_bytree_weight_factor);
+        output.push_back(fi);
+    }
+}
+
 template <typename T>
 inline void remove(std::vector<T> &v, const T &item)
 {
