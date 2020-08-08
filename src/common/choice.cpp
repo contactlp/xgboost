@@ -18,7 +18,6 @@ void printv(std::vector<VT> v)
     std::cout << "\n";
 }
 
-
 template <typename T>
 inline void remove(std::vector<T> &v, const T &item)
 {
@@ -44,23 +43,26 @@ std::vector<TU> scale_up(std::vector<TU> a, std::vector<float> p)
             ap.push_back(ai);
         }
     }
-   return ap;
+    return ap;
 }
 
 template <typename TUU>
 std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<float> p)
 {
-    if(replace == true){
+    if (replace == true)
+    {
         std::cout << "Not Implemented \n\n";
         return a;
     }
 
-    if(size >= a.size()){
+    if (size >= a.size())
+    {
         std::cout << "No need if choosing, subsample size is bigger or equal to sample \n\n";
         return a;
     }
 
-    if (p.size() != a.size()){
+    if (p.size() != a.size())
+    {
         std::cout << "p and a should have the same size \n\n";
         return a;
     }
@@ -70,9 +72,9 @@ std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<
 
     std::vector<TUU> ap_out;
 
-    for (int i=0; i < size;i++){
-        
-        
+    for (int i = 0; i < size; i++)
+    {
+
         std::vector<TUU> temp;
         temp.resize(ap.size());
         // std::experimental::sample(
@@ -90,27 +92,27 @@ std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<
                      temp.end(),
                      g);
 
-
         ap_out.push_back(temp.at(0));
-        remove(ap,temp.at(0));
-
+        remove(ap, temp.at(0));
     }
     return ap_out;
 }
 
+// int main()
+// {
 
-// int main(){
+//     // std::vector<int> a{1,      2,  3, 4, 5 };
+//     // std::vector<float> p{0.199, 1, 3, 0.6, 0};
+//     // std::vector<int> ap_out;
+//     // std::vector<int> features_weighted_out;
 
+//     // ap_out = choice(a,3,false,p);
+//     // printv (ap_out);
 
-//     std::vector<int> a{1,      2,  3, 4, 5 };
-//     std::vector<float> p{0.199, 1, 3, 0.6, 0}; 
-//     std::vector<int> ap_out;
-//     std::vector<int> features_weighted_out;
-
-//     ap_out = choice(a,3,false,p);
-//     printv (ap_out);
-
-//     // std::vector<float> p{0, 1, 2 ,3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+//     // // std::vector<float> p{0, 1, 2 ,3, 4, 5, 6, 7, 8, 9, 10, 11, 12};
+//     std::vector<int> a{1, 2, 3, 4, 5};
+//     int b = 100;
+//     std::vector<float> output{};
+//     convert_vec_to_float(a, b, output);
+//     printv(output);
 // }
-
-
