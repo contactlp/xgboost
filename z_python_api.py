@@ -31,6 +31,9 @@ from sklearn.model_selection import GridSearchCV
 from bayes_opt import BayesianOptimization
 import warnings
 
+def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
+        return tuple([round(n) * colsample_bytree_weight_factor for n in lst])
+
 print("xgb.__version__ : ",xgb.__version__)
 data_dir= '/home/lpatel/projects/AKI/data_592v'
 #data_dir= '~/projects/AKI/test'
@@ -61,10 +64,15 @@ print(set(X_col) -set(weight.col_fmt.tolist()) )
 print(set(weight.col_fmt.tolist()) - set(X_col) )
 
 weight1_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight1.tolist()
+#weight1_lst = [1,2,4]
 weight2_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight2.tolist()
 weight3_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight3.tolist()
 weight4_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight4.tolist()
 weight5_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight5.tolist()
+
+#colsample_bytree_weight=(4,6)
+colsample_bytree_weight=tuple(weight1_lst)
+colsample_bytree_weight_factor=100000000
 
 #geting feature importance for the best round
 #params = {'booster': 'gbtree', 'max_depth': 10, 'min_child_weight': 10, 'eta': 0.3, 'objective': 'binary:logistic', 'n_jobs': 20, 'silent': True, 'eval_metric': 'logloss', 'subsample': 0.8, 'colsample_bytree': 0.5, 'seed': 1001}
@@ -80,8 +88,8 @@ model = xgb.XGBClassifier(
   subsample= 0.8,
   colsample_bytree= 0.5,
   seed= 1001,
-  colsample_bytree_weight=(4,6),
-  colsample_bytree_weight_factor=10000
+  colsample_bytree_weight=sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor),
+  colsample_bytree_weight_factor=colsample_bytree_weight_factor
 )
 model.fit(X_train, y_train)
 print(model.get_xgb_params)
