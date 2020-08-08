@@ -35,8 +35,30 @@ inline void remove(std::vector<T> &v, const T &item)
     v.erase(std::remove(v.begin(), v.end(), item), v.end());
 }
 
+// template <typename TU>
+// std::vector<TU> scale_up(std::vector<TU> a, std::vector<float> p)
+
+// {
+//     std::vector<TU> ap;
+
+//     for (int i = 0; i < p.size(); i++)
+//     {
+
+//         TU ai = a.at(i);
+//         float pif = p.at(i);
+
+//         int pin = static_cast<int>(roundf(pif * 100000));
+
+//         for (int i = 0; i < pin; i++)
+//         {
+//             ap.push_back(ai);
+//         }
+//     }
+//     return ap;
+// }
+
 template <typename TU>
-std::vector<TU> scale_up(std::vector<TU> a, std::vector<float> p)
+std::vector<TU> scale_up_int(std::vector<TU> a, std::vector<int> p)
 
 {
     std::vector<TU> ap;
@@ -45,9 +67,10 @@ std::vector<TU> scale_up(std::vector<TU> a, std::vector<float> p)
     {
 
         TU ai = a.at(i);
-        float pif = p.at(i);
+        int pif = p.at(i);
 
-        int pin = static_cast<int>(roundf(pif * 100000));
+        // int pin = static_cast<int>(roundf(pif * 100000));
+        int pin = pif;
 
         for (int i = 0; i < pin; i++)
         {
@@ -58,7 +81,7 @@ std::vector<TU> scale_up(std::vector<TU> a, std::vector<float> p)
 }
 
 template <typename TUU>
-std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<float> p)
+std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<int> p)
 {
     if (replace == true)
     {
@@ -79,9 +102,11 @@ std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<
     }
 
     std::vector<TUU> ap;
-    ap = scale_up(a, p);
+    // ap = scale_up(a, p);
+    ap = scale_up_int(a, p);
 
-    std::vector<TUU> ap_out;
+    std::vector<TUU>
+        ap_out;
 
     for (int i = 0; i < size; i++)
     {
