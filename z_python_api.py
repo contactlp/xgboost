@@ -36,17 +36,16 @@ def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
 
 print("xgb.__version__ : ",xgb.__version__)
 data_dir= '/home/lpatel/projects/AKI/data_592v'
-#data_dir= '~/projects/AKI/test'
-#data_dir='/home/lpatel/projects/AKI/data'
+
 train_csv = os.path.join(data_dir,'train_csv.csv')
 test_csv = os.path.join(data_dir,'test_csv.csv')
 weight_csv = os.path.join(data_dir,'weight_csv.csv')
 
 train = pd.read_csv(train_csv
-        , nrows=100
+        , nrows=10
         )
 test = pd.read_csv(test_csv
-        , nrows=100
+        , nrows=10
         )
 weight = pd.read_csv(weight_csv)
 #column names are formted inconsitantly 
@@ -78,181 +77,21 @@ sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight
 print('py____colsample_bytree_weight', colsample_bytree_weight)
 print('py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
 
-#geting feature importance for the best round
-#params = {'booster': 'gbtree', 'max_depth': 10, 'min_child_weight': 10, 'eta': 0.3, 'objective': 'binary:logistic', 'n_jobs': 20, 'silent': True, 'eval_metric': 'logloss', 'subsample': 0.8, 'colsample_bytree': 0.5, 'seed': 1001}
-model = xgb.XGBClassifier(
-  booster= 'gbtree',
-  max_depth= 2 , #10,
-  min_child_weight= 10,
-  eta= 0.3,
-  objective= 'binary:logistic',
-  n_jobs= 20,
-  silent= True,
-  eval_metric= 'logloss',
-  subsample= 0.8,
-  colsample_bytree= 0.5,
-  seed= 1001,
-  colsample_bytree_weight=sendable_colsample_bytree_weight,
-  colsample_bytree_weight_factor=colsample_bytree_weight_factor
-)
-model.fit(X_train, y_train)
+model_iteration =2
+xgb_model=None
+for i in range(model_iteration):
+        print('\n',"model_iteration:",i,'\n')
+        model = xgb.XGBClassifier(n_estimators=1,booster= 'gbtree', max_depth= 2 , min_child_weight= 10, eta= 0.3, objective= 'binary:logistic', n_jobs= 20, silent= True, eval_metric= 'logloss',
+                subsample= 0.8, colsample_bytree= 0.5, seed= 1001, colsample_bytree_weight=sendable_colsample_bytree_weight, colsample_bytree_weight_factor=colsample_bytree_weight_factor,
+                xgb_model=None)
+        model.fit(X_train, y_train)
+        xgb_model='model.model'
+        model.save_model(xgb_model)
+
+
 print(model.get_xgb_params)
 df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
 t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
 df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
 
 exit(0)
-
-# +
-# def algorithm_pipeline(X_train_data, X_test_data, y_train_data, y_test_data, 
-#                        model, param_grid, cv=10, scoring_fit = 'roc_auc',
-#                        do_probabilities = True):
-    
-#     gs = GridSearchCV(
-#         estimator=model,
-#         param_grid=param_grid, 
-#         cv=cv, 
-#         n_jobs=4, 
-#         scoring=scoring_fit,
-#         verbose=2
-#     )
-#     fitted_model = gs.fit(X_train_data, y_train_data)
-    
-#     if do_probabilities:
-#         pred = fitted_model.predict_proba(X_test_data)
-#     else:
-#         pred = fitted_model.predict(X_test_data)
-    
-#     return fitted_model, pred
-
-# model = xgb.XGBClassifier(
-#     objective='binary:logistic',
-#     n_jobs = 6
-# )
-# param_grid = {
-#     'max_depth': [3, 6, 9],
-#     'n_estimators': [500, 1000, 1500],
-#     'colsample_bytree': [0.05,0.5,0.75],
-#     'subsample': [0.5, 0.75, 0.9],
-#     'objective': ['binary:logistic'],
-
-# }
-
-# # ddddddddddddddddddd
-
-
-# model, pred  = algorithm_pipeline(X_train, X_test, y_train, y_test, model, 
-#                                  param_grid, cv=5)
-
-# data = pd.DataFrame(model.cv_results_)
-# # pd.options.display.max_columns = None
-# # pd.options.display.max_rows = None
-# print(data)
-# t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-# data.to_csv("~/results_parm_cv.csv_weight1_lst" + t)
-# print ("done")
-
-
-
-
-# # +
-# AUC_LIST = []
-# LOG_LOSS_LIST = []
-# ITERbest_LIST = []
-# PARAM_LIST = []
-
-# dtrain = xgb.DMatrix(X_train, label = y_train)
-
-
-# def XGB_CV(max_depth,
-#           # n_estimators, 
-#            colsample_bytree, subsample, min_child_weight,eta):
-
-
-#     global AUC_LIST
-#     global LOG_LOSS_LIST
-#     global ITERbest_LIST
-#     global PARAM_LIST
-    
-#     #print(n_estimators)
-
-#     paramt = {
-#               'booster' : 'gbtree',
-#               'max_depth' :  int(max_depth),
-#               'min_child_weight' : int(min_child_weight),
-# #               'n_estimators': int(n_estimators),
-#               'eta' : float(eta),
-#               'objective' : 'binary:logistic',
-#               'n_jobs' : 20,
-#               'silent' : True,
-#               'eval_metric': 'logloss',
-#               'subsample' : max(min(subsample, 1), 0),
-#               'colsample_bytree' : max(min(colsample_bytree, 1), 0),
-#               'seed' : 1001
-#               }
-    
-#     PARAM_LIST.append(paramt)
-
-#     folds = 5
-#     cv_score = 0
-
-#     print("\n Search parameters (%d-fold validation):\n %s" % (folds, paramt), file=log_file )
-#     log_file.flush()
-
-#     xgbc = xgb.cv(
-#                     paramt,
-#                     dtrain,
-#                     #num_boost_round = int(n_estimators),
-#                     stratified = True,
-#                     nfold = folds,
-#                     early_stopping_rounds = 100,
-#                     metrics = ['auc', 'logloss'],
-#                     show_stdv = True
-#                )
-
-
-
-#     auc_score = xgbc['test-auc-mean'].iloc[-1]
-#     logloss_score = xgbc['test-logloss-mean'].iloc[-1]
-#     iterbest = len(xgbc)
-#     AUC_LIST.append(auc_score)
-#     LOG_LOSS_LIST.append(logloss_score)
-#     ITERbest_LIST.append(iterbest)
-    
-
-#     return (auc_score*2) - 1
-
-
-
-# XGB_BO = BayesianOptimization(XGB_CV, {
-#                                      'max_depth': (4, 10),
-# #                                      'n_estimators': (1, 10),
-#                                      'colsample_bytree': (0.5, 0.9),
-#                                      'subsample': (0.5, 0.8),
-#                                      'min_child_weight':(1,10),
-#                                      'eta':(0.05,0.3)
-#                                     })
-
-
-# # +
-# t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-# log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
-# log_file.flush()
-
-# with warnings.catch_warnings():
-#     warnings.filterwarnings('ignore')
-#     XGB_BO.maximize(init_points=10, n_iter=100)
-
-# # +
-# df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST, "round": ITERbest_LIST, "param": PARAM_LIST })
-# df['param'] =  df['param'].astype(str)
-
-# t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-# df.to_csv("/home/lpatel/aki/results/cv_result_baysian.csv"+t+"_w0", sep="|")
-# # -
-
-# print (len(ITERbest_LIST),len(PARAM_LIST),len(LOG_LOSS_LIST),len(AUC_LIST))
-
-# #print(weight2_lst)
-
-
