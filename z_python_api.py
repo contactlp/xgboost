@@ -139,9 +139,7 @@ model_iteration =100
 xgb_model=None
 for i in range(model_iteration):
         print('\n',"model_iteration:",i,'\n')
-        # model = xgb.XGBClassifier(n_estimators=1,booster= 'gbtree', max_depth= 2 , min_child_weight= 10, eta= 0.3, objective= 'binary:logistic', n_jobs= 20, silent= True, eval_metric= 'logloss',
-        #         subsample= 0.8, colsample_bytree= 0.5, seed= 1001, colsample_bytree_weight=sendable_colsample_bytree_weight, colsample_bytree_weight_factor=colsample_bytree_weight_factor,
-        #         xgb_model=None)
+
         model = xgb.train(params=params
             ,dtrain=dtrain
             ,evals=[(dtrain, 'train'), (dtest, 'test')]
@@ -149,19 +147,15 @@ for i in range(model_iteration):
             ,callbacks=[MyCallback()]
             ,xgb_model=xgb_model
             )
-        # xgb.train(params, dtrain, num_boost_round=2, evals=[(dtrain, 'train'), (dtest, 'test')],
-        #   callbacks=[MyCallback()])
-        #model.fit(X_train, y_train)
+        
         xgb_model='model.model'
         model.save_model(xgb_model)
         #break
 
-
-#print(model.get_xgb_params)
-#df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
 print ("model.get_score: ", model.get_score())
 print("model.get_fscore: ",model.get_fscore())
-# df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.get_fscore() })
+#print(model.get_xgb_params)
+#df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
 # df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
 
 exit(0)
