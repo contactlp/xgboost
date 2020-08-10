@@ -30,9 +30,47 @@ import datetime
 from sklearn.model_selection import GridSearchCV
 from bayes_opt import BayesianOptimization
 import warnings
+import pprint
+
+pp = pprint.PrettyPrinter()
 
 def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
         return tuple([round(n * colsample_bytree_weight_factor) for n in lst])
+
+
+def fmap(trees):
+    fmap = {}
+    for tree in trees:
+        for line in tree.split('\n'):
+            # look for the opening square bracket
+            arr = line.split('[')
+            # if no opening bracket (leaf node), ignore this line
+            if len(arr) == 1:
+                continue
+
+            # extract feature name from string between []
+            fid = arr[1].split(']')[0].split('<')[0]
+
+            if fid not in fmap:
+                # if the feature hasn't been seen yet
+                fmap[fid] = 1
+            else:
+                fmap[fid] += 1
+    return fmap
+
+
+
+def MyCallback():
+    def callback(env):
+        #print('\n starting callback')
+        trees = env.model.get_dump(with_stats=True)
+        feature_weight = fmap(trees)
+        #pp.pprint(trees)
+        #print(feature_weight)
+        #print("\n gain ", env.model.get_score(importance_type='gain'))
+        #print('\n ending callback')
+    return callback
+
 
 print("xgb.__version__ : ",xgb.__version__)
 data_dir= '/home/lpatel/projects/AKI/data_592v'
@@ -42,10 +80,10 @@ test_csv = os.path.join(data_dir,'test_csv.csv')
 weight_csv = os.path.join(data_dir,'weight_csv.csv')
 
 train = pd.read_csv(train_csv
-        , nrows=10
+        , nrows=100000
         )
 test = pd.read_csv(test_csv
-        , nrows=10
+        , nrows=100000
         )
 weight = pd.read_csv(weight_csv)
 #column names are formted inconsitantly 
@@ -58,6 +96,8 @@ y_col = cols[-1]
 
 X_train,y_train = train[X_col],train[y_col]
 X_test,  y_test = test[X_col] ,test[y_col]
+dtrain = xgb.DMatrix(X_train, label=y_train)
+dtest = xgb.DMatrix(X_test, label=y_test)
 
 print(set(X_col) -set(weight.col_fmt.tolist()) )
 print(set(weight.col_fmt.tolist()) - set(X_col) )
@@ -74,24 +114,54 @@ colsample_bytree_weight=tuple(weight1_lst)
 colsample_bytree_weight_factor=10000
 sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor)
 
-print('py____colsample_bytree_weight', colsample_bytree_weight)
-print('py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
+#print('\n py____colsample_bytree_weight', colsample_bytree_weight)
+#print('\n py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
+params={
+    'booster' : 'gbtree',
+    'max_depth' : 10 ,
+    'min_child_weight' : 10,
+    #'eta' : 0.01,
+    'objective' : 'binary:logistic',
+    #'objective' : 'reg:squarederror',
+    'n_jobs' : 20,
+    'silent' : True,
+    'eval_metric' : 'logloss',
+    #'eval_metric' : 'rmse',
 
-model_iteration =2
+    'subsample' : 0.8,
+    'colsample_bytree' : 0.5,
+    'seed': 1001,
+    'colsample_bytree_weight' : sendable_colsample_bytree_weight,
+    'colsample_bytree_weight_factor' : colsample_bytree_weight_factor,
+}
+
+model_iteration =100
 xgb_model=None
 for i in range(model_iteration):
         print('\n',"model_iteration:",i,'\n')
-        model = xgb.XGBClassifier(n_estimators=1,booster= 'gbtree', max_depth= 2 , min_child_weight= 10, eta= 0.3, objective= 'binary:logistic', n_jobs= 20, silent= True, eval_metric= 'logloss',
-                subsample= 0.8, colsample_bytree= 0.5, seed= 1001, colsample_bytree_weight=sendable_colsample_bytree_weight, colsample_bytree_weight_factor=colsample_bytree_weight_factor,
-                xgb_model=None)
-        model.fit(X_train, y_train)
+        # model = xgb.XGBClassifier(n_estimators=1,booster= 'gbtree', max_depth= 2 , min_child_weight= 10, eta= 0.3, objective= 'binary:logistic', n_jobs= 20, silent= True, eval_metric= 'logloss',
+        #         subsample= 0.8, colsample_bytree= 0.5, seed= 1001, colsample_bytree_weight=sendable_colsample_bytree_weight, colsample_bytree_weight_factor=colsample_bytree_weight_factor,
+        #         xgb_model=None)
+        model = xgb.train(params=params
+            ,dtrain=dtrain
+            ,evals=[(dtrain, 'train'), (dtest, 'test')]
+            ,num_boost_round=1
+            ,callbacks=[MyCallback()]
+            ,xgb_model=xgb_model
+            )
+        # xgb.train(params, dtrain, num_boost_round=2, evals=[(dtrain, 'train'), (dtest, 'test')],
+        #   callbacks=[MyCallback()])
+        #model.fit(X_train, y_train)
         xgb_model='model.model'
         model.save_model(xgb_model)
+        #break
 
 
-print(model.get_xgb_params)
-df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
-t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
+#print(model.get_xgb_params)
+#df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
+print ("model.get_score: ", model.get_score())
+print("model.get_fscore: ",model.get_fscore())
+# df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.get_fscore() })
+# df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
 
 exit(0)

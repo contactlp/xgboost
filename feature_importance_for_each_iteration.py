@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: light
 #       format_version: '1.5'
-#       jupytext_version: 1.5.2
+#       jupytext_version: 1.3.4
 #   kernelspec:
 #     display_name: Python 3
 #     language: python
@@ -86,6 +86,8 @@ bst = xgb.train(params, dtrain, num_boost_round=2, evals=[(dtrain, 'train'), (dt
 fig, ax = plt.subplots(figsize=(30, 30))
 xgb.plot_tree(bst,ax=ax)
 
-xgb.feature_importances_
+bst.get_score(importance_type='gain')
+
+bst.get_fscore()
 
 
