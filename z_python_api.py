@@ -32,7 +32,9 @@ from bayes_opt import BayesianOptimization
 import warnings
 import pprint
 
+
 pp = pprint.PrettyPrinter()
+
 
 def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
         return tuple([round(n * colsample_bytree_weight_factor) for n in lst])
@@ -59,7 +61,6 @@ def fmap(trees):
     return fmap
 
 
-
 def MyCallback():
     def callback(env):
         #print('\n starting callback')
@@ -72,70 +73,103 @@ def MyCallback():
     return callback
 
 
+def read_csvs(data_dir):
+    train_csv = os.path.join(data_dir,'train_csv.csv')
+    test_csv = os.path.join(data_dir,'test_csv.csv')
+    weight_csv = os.path.join(data_dir,'weight_csv.csv')
+    
+    train = pd.read_csv(train_csv
+        , nrows=100000
+        )
+    test = pd.read_csv(test_csv
+        , nrows=100000
+        )
+    weight = pd.read_csv(weight_csv)
+    
+    #column names are formted inconsitantly 
+    weight['col_fmt'] = weight.col.str.replace('-','.').str.replace(':','.')
+    
+    return (train,test,weight)
+
+
+def convert_to_dmatix(train,test,weight):
+    cols = train.columns.tolist()
+    X_col = cols[1:-1]
+    y_col = cols[-1]
+
+    X_train,y_train = train[X_col],train[y_col]
+    X_test,  y_test = test[X_col] ,test[y_col]
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+    dtest = xgb.DMatrix(X_test, label=y_test)
+    
+    
+    print("missing cols X vs Weights : ",set(X_col) -set(weight.col_fmt.tolist()) )
+    print("missing cols Weights vs X : ",set(weight.col_fmt.tolist()) - set(X_col) )
+
+    return (X_train, X_test, dtrain, dtest)
+
+
+def find_all_weight(weight,X_train):
+    
+    weight1 =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight1.tolist()
+    weight2 =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight2.tolist()
+    weight3 =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight3.tolist()
+    weight4 =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight4.tolist()
+    weight5 =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight5.tolist()
+
+    return (weight1, weight2, weight3, weight4, weight5)
+
+
+def weighted_resampling_params(colsample_bytree_weight_lst,colsample_bytree_weight_factor):
+
+    # colsample_bytree_weight needs to be tupple
+    colsample_bytree_weight=tuple(colsample_bytree_weight_lst)
+    # colsample_bytree_weight_factor need to int and big enough so small float can be represented as int.
+    colsample_bytree_weight_factor=colsample_bytree_weight_factor
+
+    sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor)
+
+    print('\n py____colsample_bytree_weight', colsample_bytree_weight)
+    print('\n py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
+    
+    params={
+        'booster' : 'gbtree',
+        'max_depth' : 10 ,
+        'min_child_weight' : 10,
+        #'eta' : 0.01,
+        'objective' : 'binary:logistic',
+        'n_jobs' : 20,
+        'silent' : True,
+        'eval_metric' : 'logloss',
+        'subsample' : 0.8,
+        'colsample_bytree' : 0.5,
+        'seed': 1001,
+        'colsample_bytree_weight' : sendable_colsample_bytree_weight,
+        'colsample_bytree_weight_factor' : colsample_bytree_weight_factor,
+    }
+
+    return params
+    
+
+
+# -
+
+# # Main
+
+# +
 print("xgb.__version__ : ",xgb.__version__)
+
 data_dir= '/home/lpatel/projects/AKI/data_592v'
 
-train_csv = os.path.join(data_dir,'train_csv.csv')
-test_csv = os.path.join(data_dir,'test_csv.csv')
-weight_csv = os.path.join(data_dir,'weight_csv.csv')
-
-train = pd.read_csv(train_csv
-        , nrows=100000
-        )
-test = pd.read_csv(test_csv
-        , nrows=100000
-        )
-weight = pd.read_csv(weight_csv)
-#column names are formted inconsitantly 
-weight['col_fmt'] = weight.col.str.replace('-','.').str.replace(':','.')
+train,test,weight = read_csvs(data_dir)
+X_train, X_test, dtrain, dtest =  convert_to_dmatix(train,test,weight)
+weight1, weight2, weight3, weight4, weight5 = find_all_weight(weight,X_train)
+params = weighted_resampling_params(weight1,colsample_bytree_weight_factor=10000)
 
 
-cols = train.columns.tolist()
-X_col = cols[1:-1]
-y_col = cols[-1]
+# +
 
-X_train,y_train = train[X_col],train[y_col]
-X_test,  y_test = test[X_col] ,test[y_col]
-dtrain = xgb.DMatrix(X_train, label=y_train)
-dtest = xgb.DMatrix(X_test, label=y_test)
-
-print(set(X_col) -set(weight.col_fmt.tolist()) )
-print(set(weight.col_fmt.tolist()) - set(X_col) )
-
-weight1_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight1.tolist()
-#weight1_lst = [1,2,4]
-weight2_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight2.tolist()
-weight3_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight3.tolist()
-weight4_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight4.tolist()
-weight5_lst =  weight.set_index(keys=['col_fmt']).reindex(X_train.columns.tolist()).weight5.tolist()
-
-#colsample_bytree_weight=(4,6)
-colsample_bytree_weight=tuple(weight1_lst)
-colsample_bytree_weight_factor=10000
-sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor)
-
-#print('\n py____colsample_bytree_weight', colsample_bytree_weight)
-#print('\n py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
-params={
-    'booster' : 'gbtree',
-    'max_depth' : 10 ,
-    'min_child_weight' : 10,
-    #'eta' : 0.01,
-    'objective' : 'binary:logistic',
-    #'objective' : 'reg:squarederror',
-    'n_jobs' : 20,
-    'silent' : True,
-    'eval_metric' : 'logloss',
-    #'eval_metric' : 'rmse',
-
-    'subsample' : 0.8,
-    'colsample_bytree' : 0.5,
-    'seed': 1001,
-    'colsample_bytree_weight' : sendable_colsample_bytree_weight,
-    'colsample_bytree_weight_factor' : colsample_bytree_weight_factor,
-}
-
-model_iteration =100
+model_iteration =2
 xgb_model=None
 for i in range(model_iteration):
         print('\n',"model_iteration:",i,'\n')
@@ -150,7 +184,7 @@ for i in range(model_iteration):
         
         xgb_model='model.model'
         model.save_model(xgb_model)
-        #break
+        
 
 print ("model.get_score: ", model.get_score())
 print("model.get_fscore: ",model.get_fscore())
@@ -158,4 +192,8 @@ print("model.get_fscore: ",model.get_fscore())
 #df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
 # df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
 
-exit(0)
+
+
+# -
+
+
