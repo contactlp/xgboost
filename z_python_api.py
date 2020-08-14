@@ -73,19 +73,20 @@ def MyCallback():
     return callback
 
 
-def read_csvs(data_dir):
+def read_csvs(data_dir,nrows=None):
     train_csv = os.path.join(data_dir,'train_csv.csv')
     test_csv = os.path.join(data_dir,'test_csv.csv')
     weight_csv = os.path.join(data_dir,'weight_csv.csv')
     
-    train = pd.read_csv(train_csv
-        , nrows=100000
-        )
-    test = pd.read_csv(test_csv
-        , nrows=100000
-        )
+    if nrows==None:
+        train = pd.read_csv(train_csv)
+        test = pd.read_csv(test_csv)
+    else:
+        train = pd.read_csv(train_csv, nrows=nrows)
+        test = pd.read_csv(test_csv, nrows=nrows)
     weight = pd.read_csv(weight_csv)
     
+    print ("train shape:%s , test shape: %s , weight shape: %s" %(train.shape,test.shape,weight.shape))
     #column names are formted inconsitantly 
     weight['col_fmt'] = weight.col.str.replace('-','.').str.replace(':','.')
     
@@ -129,9 +130,9 @@ def weighted_resampling_params(colsample_bytree_weight_lst,colsample_bytree_weig
 
     sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor)
 
-    print('\n py____colsample_bytree_weight', colsample_bytree_weight)
-    print('\n py____sendable_colsample_bytree_weight', sendable_colsample_bytree_weight)
-    
+    #print('\n py____colsample_bytree_weight', colsample_bytree_weight)
+    print('\n py____colsample_bytree_weight', "min:", min(colsample_bytree_weight),";  max :", max(colsample_bytree_weight))
+    print('\n py____sendable_colsample_bytree_weight', "min:", min(sendable_colsample_bytree_weight),";  max :", max(sendable_colsample_bytree_weight))
     params={
         'booster' : 'gbtree',
         'max_depth' : 10 ,
@@ -149,9 +150,31 @@ def weighted_resampling_params(colsample_bytree_weight_lst,colsample_bytree_weig
     }
 
     return params
+
+
+def model_iterate(iteration,params,dtrain,dtest,MyCallback):
+
+    xgb_model=None
+    for i in range(iteration):
+            print('\n model_iteration: %s \n'%(i))
+
+            model = xgb.train(
+                 params=params
+                ,dtrain=dtrain
+                ,evals=[(dtrain, 'train'), (dtest, 'test')]
+                ,num_boost_round=1
+                ,callbacks=[MyCallback()]
+                ,xgb_model=xgb_model
+                )
+
+            xgb_model='model.model'
+            model.save_model(xgb_model)
+
+
+    print ("model.get_score : ", model.get_score(importance_type='gain'))
+    print( "model.get_fscore: ", model.get_fscore())
     
-
-
+    return model
 # -
 
 # # Main
@@ -161,39 +184,28 @@ print("xgb.__version__ : ",xgb.__version__)
 
 data_dir= '/home/lpatel/projects/AKI/data_592v'
 
-train,test,weight = read_csvs(data_dir)
+train,test,weight = read_csvs(data_dir,nrows=100000)
 X_train, X_test, dtrain, dtest =  convert_to_dmatix(train,test,weight)
-weight1, weight2, weight3, weight4, weight5 = find_all_weight(weight,X_train)
-params = weighted_resampling_params(weight1,colsample_bytree_weight_factor=10000)
+w1, w2, w3, w4, w5 = find_all_weight(weight,X_train)
+w = {
+    'w1': w1,
+    'w2': w2,
+    'w3': w3,
+    'w4': w4,
+    'w5': w5
+    }
 
+for current_w in w:
+    print("\n current_w : %s \n" %(current_w))
+    
+    params = weighted_resampling_params(w[current_w],colsample_bytree_weight_factor=10000)
+    model = model_iterate(2,params,dtrain,dtest,MyCallback)
 
-# +
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    df=pd.DataFrame(model.get_score(importance_type='gain'),index=[0])
+    df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" % (t,current_w),index=False)
+    
+    break
 
-model_iteration =2
-xgb_model=None
-for i in range(model_iteration):
-        print('\n',"model_iteration:",i,'\n')
-
-        model = xgb.train(params=params
-            ,dtrain=dtrain
-            ,evals=[(dtrain, 'train'), (dtest, 'test')]
-            ,num_boost_round=1
-            ,callbacks=[MyCallback()]
-            ,xgb_model=xgb_model
-            )
-        
-        xgb_model='model.model'
-        model.save_model(xgb_model)
-        
-
-print ("model.get_score: ", model.get_score())
-print("model.get_fscore: ",model.get_fscore())
-#print(model.get_xgb_params)
-#df= pd.DataFrame({'cols':X_train.columns,'feature_importances' :model.feature_importances_ }).sort_values(by='feature_importances',ascending=False)
-# df.to_csv("/home/lpatel/aki/results/feature_importance_tesing.csv"+t+'_w0',index=False)
-
-
-
-# -
 
 
