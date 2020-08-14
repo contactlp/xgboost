@@ -130,9 +130,9 @@ def weighted_resampling_params(colsample_bytree_weight_lst,colsample_bytree_weig
 
     sendable_colsample_bytree_weight = sendable_float_to_cpp(colsample_bytree_weight,colsample_bytree_weight_factor)
 
-    #print('\n py____colsample_bytree_weight', colsample_bytree_weight)
-    print('\n py____colsample_bytree_weight', "min:", min(colsample_bytree_weight),";  max :", max(colsample_bytree_weight))
-    print('\n py____sendable_colsample_bytree_weight', "min:", min(sendable_colsample_bytree_weight),";  max :", max(sendable_colsample_bytree_weight))
+    #print('\n colsample_bytree_weight', colsample_bytree_weight)
+    print('\n colsample_bytree_weight', "min:", min(colsample_bytree_weight),";  max :", max(colsample_bytree_weight))
+    print('\n sendable_colsample_bytree_weight', "min:", min(sendable_colsample_bytree_weight),";  max :", max(sendable_colsample_bytree_weight))
     params={
         'booster' : 'gbtree',
         'max_depth' : 10 ,
@@ -171,8 +171,8 @@ def model_iterate(iteration,params,dtrain,dtest,MyCallback):
             model.save_model(xgb_model)
 
 
-    print ("model.get_score : ", model.get_score(importance_type='gain'))
-    print( "model.get_fscore: ", model.get_fscore())
+    print ("model.get_score_gain : ", model.get_score(importance_type='gain'))
+    print( "model.get_fscore     : ", model.get_fscore())
     
     return model
 # -
@@ -182,9 +182,13 @@ def model_iterate(iteration,params,dtrain,dtest,MyCallback):
 # +
 print("xgb.__version__ : ",xgb.__version__)
 
-data_dir= '/home/lpatel/projects/AKI/data_592v'
 
-train,test,weight = read_csvs(data_dir,nrows=100000)
+data_dir= '/home/lpatel/projects/AKI/data_592v'
+nrows = 100000
+colsample_bytree_weight_factor = 10000
+
+
+train,test,weight = read_csvs(data_dir,nrows=nrows)
 X_train, X_test, dtrain, dtest =  convert_to_dmatix(train,test,weight)
 w1, w2, w3, w4, w5 = find_all_weight(weight,X_train)
 w = {
@@ -194,11 +198,13 @@ w = {
     'w4': w4,
     'w5': w5
     }
+# -
+
 
 for current_w in w:
     print("\n current_w : %s \n" %(current_w))
     
-    params = weighted_resampling_params(w[current_w],colsample_bytree_weight_factor=10000)
+    params = weighted_resampling_params(w[current_w],colsample_bytree_weight_factor)
     model = model_iterate(2,params,dtrain,dtest,MyCallback)
 
     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
@@ -206,6 +212,5 @@ for current_w in w:
     df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" % (t,current_w),index=False)
     
     break
-
 
 
