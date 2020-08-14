@@ -103,3 +103,4 @@ R-package/src/Makevars
 /cmake-build-debug/
 venv
 .ipynb_checkpoints
+*.ipynb
