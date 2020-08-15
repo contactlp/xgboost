@@ -33,9 +33,6 @@ import warnings
 import pprint
 
 
-pp = pprint.PrettyPrinter()
-
-
 def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
         return tuple([round(n * colsample_bytree_weight_factor) for n in lst])
 
@@ -61,15 +58,29 @@ def fmap(trees):
     return fmap
 
 
+def find_view_weights(w_list):
+    
+    view_weight = {}
+    for feature, weight in zip(X_train.columns.tolist(),w_list):
+        if weight not in view_weight:
+            view_weight[weight]= [feature]
+        else:
+            view_weight[weight].append(feature)
+            
+    return view_weight
+
+
 def MyCallback():
     def callback(env):
-        #print('\n starting callback')
+        print('\n------------------starting callback------------------')
         trees = env.model.get_dump(with_stats=True)
         feature_weight = fmap(trees)
         #pp.pprint(trees)
-        #print(feature_weight)
-        #print("\n gain ", env.model.get_score(importance_type='gain'))
-        #print('\n ending callback')
+        
+        global gain 
+        gain = env.model.get_score(importance_type='gain')
+        print("\n gain %s" %(gain))
+        print('\n------------------ending callback------------------')
     return callback
 
 
@@ -156,7 +167,13 @@ def model_iterate(iteration,params,dtrain,dtest,MyCallback):
 
     xgb_model=None
     for i in range(iteration):
-            print('\n model_iteration: %s \n'%(i))
+            print('''
+            \n
+            ----------------------------------------------------------------------------------
+            ------------------------------- model_iteration: %s-------------------------------
+            ----------------------------------------------------------------------------------
+            \n
+            '''%(i))
 
             model = xgb.train(
                  params=params
@@ -180,6 +197,8 @@ def model_iterate(iteration,params,dtrain,dtest,MyCallback):
 # # Main
 
 # +
+pp = pprint.PrettyPrinter()
+gain = None
 print("xgb.__version__ : ",xgb.__version__)
 
 
@@ -212,5 +231,10 @@ for current_w in w:
     df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" % (t,current_w),index=False)
     
     break
+
+
+def find_new_view_importance(features_per_view,last_round_feature_weight):
+    pass
+    return weight_per_view
 
 
