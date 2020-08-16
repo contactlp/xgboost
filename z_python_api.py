@@ -61,13 +61,17 @@ def fmap(trees):
 def find_view_weights(w_list):
     
     view_weight = {}
+    features_per_view = {}
+    
     for feature, weight in zip(X_train.columns.tolist(),w_list):
-        if weight not in view_weight:
-            view_weight[weight]= [feature]
+        view_weight[feature] = weight
+        
+        if weight not in features_per_view:
+            features_per_view[weight]= [feature]
         else:
-            view_weight[weight].append(feature)
+            features_per_view[weight].append(feature)
             
-    return view_weight
+    return (features_per_view,view_weight)
 
 
 def MyCallback():
@@ -233,8 +237,47 @@ for current_w in w:
     break
 
 
-def find_new_view_importance(features_per_view,last_round_feature_weight):
-    pass
-    return weight_per_view
+# +
+def find_new_view_importance(last_round_feature_weight,current_w):
+    
+    # how many view are there ?
+    features_per_view, view_weight = find_view_weights(w[current_w])
+    unused_views = set(features_per_view)
+    
+    # find view which has not been used
+    for feature in last_round_feature_weight:
+        
+        unused_views = unused_views - set([view_weight[feature]])
+            
+    # min weight of last round features
+    min_feat_weight = min(last_round_feature_weight.values())
+    
+    # give weight if there is unused view
+    unused_views_weight = {}
+    if len(unused_views)!= 0:
+        for view in unused_views:
+            unused_views_weight[view] = min_feat_weight * 0.9
+    return  unused_views_weight 
+            
+    
+
+find_new_view_importance(gain,current_w)
+
+
+# +
+def normalize_gain(gain,current_w):
+       
+    
+    for weight in feature_weight_dict:
+        print(weight, set(gain) - set(feature_weight_dict[weight]))
+        
+print(normalize_gain(gain,current_w))
+# -
+
+gain
+
+features_per_view, view_weight = find_view_weights(w[current_w])
+
+features_per_view.
 
 
