@@ -74,6 +74,44 @@ def find_view_weights(w_list):
     return (features_per_view,view_weight)
 
 
+def find_new_view_importance(last_round_feature_weight,current_w):
+    
+    # how many view are there ?
+    features_per_view, feature_weight = find_view_weights(w[current_w])
+    unused_views = set(features_per_view)
+    
+    # find view which has not been used
+    for feature in last_round_feature_weight:
+        print(feature)
+        unused_views = unused_views - set([feature_weight[feature]])
+            
+    # min weight of last round features
+    min_feat_weight = min(last_round_feature_weight.values())
+    
+    # give weight if there is unused view
+    views_weight = {}
+    if len(unused_views)!= 0:
+        for view in unused_views:
+            views_weight[view] = min_feat_weight * 0.9
+    
+    # used view weight adding
+    for feature in last_round_feature_weight:
+        view = feature_weight[feature]
+        if view not in views_weight:
+            views_weight[view] = last_round_feature_weight[feature]
+        else:
+            views_weight[view] = views_weight[view] + last_round_feature_weight[feature]
+    return  views_weight 
+            
+
+def normalize_dict_values(d):
+    output = {}
+    total = sum(d.values())
+    for i in d:
+        output[i] = d[i]/total
+    return output
+
+
 def MyCallback():
     def callback(env):
         print('\n------------------starting callback------------------')
@@ -236,48 +274,5 @@ for current_w in w:
     
     break
 
-
-# +
-def find_new_view_importance(last_round_feature_weight,current_w):
-    
-    # how many view are there ?
-    features_per_view, view_weight = find_view_weights(w[current_w])
-    unused_views = set(features_per_view)
-    
-    # find view which has not been used
-    for feature in last_round_feature_weight:
-        
-        unused_views = unused_views - set([view_weight[feature]])
-            
-    # min weight of last round features
-    min_feat_weight = min(last_round_feature_weight.values())
-    
-    # give weight if there is unused view
-    unused_views_weight = {}
-    if len(unused_views)!= 0:
-        for view in unused_views:
-            unused_views_weight[view] = min_feat_weight * 0.9
-    return  unused_views_weight 
-            
-    
-
-find_new_view_importance(gain,current_w)
-
-
-# +
-def normalize_gain(gain,current_w):
-       
-    
-    for weight in feature_weight_dict:
-        print(weight, set(gain) - set(feature_weight_dict[weight]))
-        
-print(normalize_gain(gain,current_w))
-# -
-
-gain
-
-features_per_view, view_weight = find_view_weights(w[current_w])
-
-features_per_view.
-
-
+new_view_weight= find_new_view_importance(gain,current_w)
+new_view_weight_normalized = normalize_dict_values(new_view_weight)  
