@@ -82,7 +82,7 @@ def find_new_view_importance(last_round_feature_weight,current_w):
     
     # find view which has not been used
     for feature in last_round_feature_weight:
-        print(feature)
+        #print(feature)
         unused_views = unused_views - set([feature_weight[feature]])
             
     # min weight of last round features
@@ -205,8 +205,8 @@ def weighted_resampling_params(colsample_bytree_weight_lst,colsample_bytree_weig
     return params
 
 
-def model_iterate(iteration,params,dtrain,dtest,MyCallback):
-
+def model_iterate(iteration,params,dtrain,dtest,MyCallback, colsample_bytree_weight_factor):
+    
     xgb_model=None
     for i in range(iteration):
             print('''
@@ -225,7 +225,21 @@ def model_iterate(iteration,params,dtrain,dtest,MyCallback):
                 ,callbacks=[MyCallback()]
                 ,xgb_model=xgb_model
                 )
-
+            
+            new_view_weight= find_new_view_importance(gain,current_w)
+            new_view_weight_normalized = normalize_dict_values(new_view_weight)
+            print ('new_view_weight_normalized: %s'%(new_view_weight_normalized))
+            
+            
+            next_w = w[current_w].copy()
+            for view in new_view_weight_normalized:
+                next_w = [new_view_weight_normalized[view] if w == view else w for w in next_w]
+            
+            print("\n current_w first 10 : %s \n" %(w[current_w][:10]))
+            print("\n next_w first 10 : %s \n" %(next_w[:10]))
+            
+            params = weighted_resampling_params(next_w,colsample_bytree_weight_factor)
+            
             xgb_model='model.model'
             model.save_model(xgb_model)
 
@@ -266,7 +280,9 @@ for current_w in w:
     print("\n current_w : %s \n" %(current_w))
     
     params = weighted_resampling_params(w[current_w],colsample_bytree_weight_factor)
-    model = model_iterate(2,params,dtrain,dtest,MyCallback)
+    model = model_iterate(100,params,dtrain,dtest,MyCallback,colsample_bytree_weight_factor)
+    
+    
 
     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
     df=pd.DataFrame(model.get_score(importance_type='gain'),index=[0])
@@ -274,5 +290,4 @@ for current_w in w:
     
     break
 
-new_view_weight= find_new_view_importance(gain,current_w)
-new_view_weight_normalized = normalize_dict_values(new_view_weight)  
+
