@@ -391,7 +391,7 @@ def XGB_CV(max_depth,
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 nrows = None  # 100000
-model_iteration = 2  # 1000
+model_iteration = 1000
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 colsample_bytree_weight_factor = 10000
 
@@ -462,7 +462,8 @@ for current_w in w:
     df['param'] = df['param'].astype(str)
 
     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    df.to_csv("/home/lpatel/aki/results/cv_result_baysian.csv"+t+"_w0", sep="|")
+    df.to_csv("/home/lpatel/aki/results/cv_result_baysian_%s_%s.csv" %
+              (t, current_w), sep="|")
     # -
 
     print(len(ITERbest_LIST), len(PARAM_LIST),
@@ -470,4 +471,4 @@ for current_w in w:
     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 
-    break
+    # break
