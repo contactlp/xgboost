@@ -21,7 +21,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 import os
-from sklearn.metrics import roc_auc_score,  roc_curve
+from sklearn.metrics import roc_auc_score,  roc_curve, log_loss
 from matplotlib import pyplot
 from sklearn.metrics import auc
 import seaborn as sns
@@ -163,7 +163,7 @@ def convert_to_dmatix(train, test, weight):
     print("missing cols Weights vs X : ", set(
         weight.col_fmt.tolist()) - set(X_col))
 
-    return (X_train, X_test, dtrain, dtest)
+    return (X_train, X_test, dtrain, dtest, y_train,  y_test)
 
 
 def find_all_weight(weight, X_train):
@@ -217,8 +217,9 @@ def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_wei
 
 
 def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor):
-
+    auc_score_list = []
     xgb_model = None
+
     for i in range(iteration):
         print('''
             \n
@@ -249,29 +250,37 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
 
         xgb_model = 'model.model'
         model.save_model(xgb_model)
+        score = model.predict(dtest)
+        auc = roc_auc_score(y_test, score)
+        auc_score_list.append(auc)
+
+        if max(auc_score_list[-50:]) < max(auc_score_list):
+            print("break")
+            break
 
     print("model.get_score_gain : ", model.get_score(importance_type='gain'))
     print("model.get_fscore     : ", model.get_fscore())
 
-    return model
+    return model, i
 # -
 
 # # Main
 
 
 # +
+nrows = None  # 100000
+model_iteration = 1000
+data_dir = '/home/lpatel/projects/AKI/data_592v'
+colsample_bytree_weight_factor = 10000
+
 pp = pprint.PrettyPrinter()
 gain = None
 print("xgb.__version__ : ", xgb.__version__)
 
 
-data_dir = '/home/lpatel/projects/AKI/data_592v'
-nrows = 100000
-colsample_bytree_weight_factor = 10000
-
-
 train, test, weight = read_csvs(data_dir, nrows=nrows)
-X_train, X_test, dtrain, dtest = convert_to_dmatix(train, test, weight)
+X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
+    train, test, weight)
 w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
 w = {
     'w1': w1,
@@ -280,20 +289,196 @@ w = {
     'w4': w4,
     'w5': w5
 }
-# -
 
+
+# +
+max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 
 for current_w in w:
     print("\n current_w : %s \n" % (current_w))
 
     params = weighted_resampling_params(
-        w[current_w], colsample_bytree_weight_factor)
-    model = model_iterate(100, params, dtrain, dtest,
-                          MyCallback, colsample_bytree_weight_factor)
+        w[current_w], colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
+    )
+    model, _ = model_iterate(model_iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
+                             )
 
     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
     df = pd.DataFrame(model.get_score(importance_type='gain'), index=[0])
     df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" %
               (t, current_w), index=False)
 
+    score = model.predict(dtest)
+    auc = roc_auc_score(y_test, score)
+
+    AUC_LIST = []
+    LOG_LOSS_LIST = []
+    ITERbest_LIST = []
+    PARAM_LIST = []
+
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+
+    XGB_BO = BayesianOptimization(XGB_CV, {
+        'max_depth': (4, 10),
+        #                                      'n_estimators': (1, 10),
+        'colsample_bytree': (0.5, 0.9),
+        'subsample': (0.5, 0.8),
+        'min_child_weight': (1, 10),
+        'eta': (0.05, 0.3)
+    })
+
+    # +
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
+    log_file.flush()
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore')
+        XGB_BO.maximize(init_points=10, n_iter=100)
+
+    # +
+    df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
+                       "round": ITERbest_LIST, "param": PARAM_LIST})
+    df['param'] = df['param'].astype(str)
+
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    df.to_csv("/home/lpatel/aki/results/cv_result_baysian.csv"+t+"_w0", sep="|")
+    # -
+
+    print(len(ITERbest_LIST), len(PARAM_LIST),
+          len(LOG_LOSS_LIST), len(AUC_LIST))
+    print("len(AUC_LIST) : %s  ; max(AUC_LIST) : %s" %
+          (min(LOG_LOSS_LIST), max(AUC_LIST)))
+
     # break
+# -
+
+score = model.predict(dtest)
+auc = roc_auc_score(y_test, score)
+
+
+# +
+def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor, max_depth,
+                               min_child_weight, eta, subsample, colsample_bytree):
+
+    # colsample_bytree_weight needs to be tupple
+    colsample_bytree_weight = tuple(colsample_bytree_weight_lst)
+    # colsample_bytree_weight_factor need to int and big enough so small float can be represented as int.
+    colsample_bytree_weight_factor = colsample_bytree_weight_factor
+
+    sendable_colsample_bytree_weight = sendable_float_to_cpp(
+        colsample_bytree_weight, colsample_bytree_weight_factor)
+
+    #print('\n colsample_bytree_weight', colsample_bytree_weight)
+    print('\n colsample_bytree_weight', "min:", min(
+        colsample_bytree_weight), ";  max :", max(colsample_bytree_weight))
+    print('\n sendable_colsample_bytree_weight', "min:", min(
+        sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight))
+    params = {
+        'booster': 'gbtree',
+        'max_depth': int(max_depth),
+        'min_child_weight': float(min_child_weight),
+        'eta': float(eta),
+        'objective': 'binary:logistic',
+        'n_jobs': 20,
+        'silent': True,
+        'eval_metric': 'logloss',
+        'subsample': max(min(float(subsample), 1), 0),
+        'colsample_bytree': max(min(float(colsample_bytree), 1), 0),
+        'seed': 1001,
+        'colsample_bytree_weight': sendable_colsample_bytree_weight,
+        'colsample_bytree_weight_factor': colsample_bytree_weight_factor,
+    }
+
+    return params
+
+
+def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor,
+                  max_depth, min_child_weight, eta, subsample, colsample_bytree
+                  ):
+    auc_score_list = []
+    xgb_model = None
+
+    for i in range(iteration):
+        print('''
+            \n
+            ----------------------------------------------------------------------------------
+            ------------------------------- model_iteration: %s-------------------------------
+            ----------------------------------------------------------------------------------
+            \n
+            ''' % (i))
+
+        model = xgb.train(
+            params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1, callbacks=[MyCallback()], xgb_model=xgb_model
+        )
+
+        new_view_weight = find_new_view_importance(gain, current_w)
+        new_view_weight_normalized = normalize_dict_values(new_view_weight)
+        print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
+
+        next_w = w[current_w].copy()
+        for view in new_view_weight_normalized:
+            next_w = [new_view_weight_normalized[view]
+                      if w == view else w for w in next_w]
+
+        print("\n current_w first 10 : %s \n" % (w[current_w][:10]))
+        print("\n next_w first 10 : %s \n" % (next_w[:10]))
+
+        params = weighted_resampling_params(
+            next_w, colsample_bytree_weight_factor,
+            max_depth, min_child_weight, eta, subsample, colsample_bytree)
+
+        xgb_model = 'model.model'
+        model.save_model(xgb_model)
+        score = model.predict(dtest)
+        auc = roc_auc_score(y_test, score)
+        auc_score_list.append(auc)
+
+        if max(auc_score_list[-50:]) < max(auc_score_list):
+            break
+
+    print("model.get_score_gain : ", model.get_score(importance_type='gain'))
+    print("model.get_fscore     : ", model.get_fscore())
+
+    return model, i
+
+
+def XGB_CV(max_depth,
+           # n_estimators,
+           colsample_bytree, subsample, min_child_weight, eta):
+
+    global AUC_LIST
+    global LOG_LOSS_LIST
+    global ITERbest_LIST
+    global PARAM_LIST
+
+    params = weighted_resampling_params(
+        w[current_w], colsample_bytree_weight_factor, max_depth,
+        min_child_weight, eta, subsample, colsample_bytree
+    )
+    PARAM_LIST.append(params)
+
+    model, i = model_iterate(model_iteration, params, dtrain, dtest,
+                             MyCallback, colsample_bytree_weight_factor, max_depth,
+                             min_child_weight, eta, subsample, colsample_bytree)
+
+    score = model.predict(dtest)
+    auc_score = roc_auc_score(y_test, score)
+    log_loss_score = log_loss(y_test, score)
+
+#     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+#     df = pd.DataFrame(model.get_score(importance_type='gain'), index=[0])
+#     df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" %
+#               (t, current_w), index=False)
+    # print(n_estimators)
+
+    AUC_LIST.append(auc_score)
+    LOG_LOSS_LIST.append(log_loss_score)
+    ITERbest_LIST.append(i)
+
+    return (auc_score*2) - 1
+
+
+# -
+
+max(AUC_LIST)
