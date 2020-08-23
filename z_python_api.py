@@ -262,102 +262,8 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
     print("model.get_fscore     : ", model.get_fscore())
 
     return model, i
-# -
-
-# # Main
 
 
-# +
-nrows = None  # 100000
-model_iteration = 1000
-data_dir = '/home/lpatel/projects/AKI/data_592v'
-colsample_bytree_weight_factor = 10000
-
-pp = pprint.PrettyPrinter()
-gain = None
-print("xgb.__version__ : ", xgb.__version__)
-
-
-train, test, weight = read_csvs(data_dir, nrows=nrows)
-X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
-    train, test, weight)
-w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
-w = {
-    'w1': w1,
-    'w2': w2,
-    'w3': w3,
-    'w4': w4,
-    'w5': w5
-}
-
-
-# +
-max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-
-for current_w in w:
-    print("\n current_w : %s \n" % (current_w))
-
-    params = weighted_resampling_params(
-        w[current_w], colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
-    )
-    model, _ = model_iterate(model_iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
-                             )
-
-    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    df = pd.DataFrame(model.get_score(importance_type='gain'), index=[0])
-    df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" %
-              (t, current_w), index=False)
-
-    score = model.predict(dtest)
-    auc = roc_auc_score(y_test, score)
-
-    AUC_LIST = []
-    LOG_LOSS_LIST = []
-    ITERbest_LIST = []
-    PARAM_LIST = []
-
-    dtrain = xgb.DMatrix(X_train, label=y_train)
-
-    XGB_BO = BayesianOptimization(XGB_CV, {
-        'max_depth': (4, 10),
-        #                                      'n_estimators': (1, 10),
-        'colsample_bytree': (0.5, 0.9),
-        'subsample': (0.5, 0.8),
-        'min_child_weight': (1, 10),
-        'eta': (0.05, 0.3)
-    })
-
-    # +
-    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
-    log_file.flush()
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore')
-        XGB_BO.maximize(init_points=10, n_iter=100)
-
-    # +
-    df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
-                       "round": ITERbest_LIST, "param": PARAM_LIST})
-    df['param'] = df['param'].astype(str)
-
-    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    df.to_csv("/home/lpatel/aki/results/cv_result_baysian.csv"+t+"_w0", sep="|")
-    # -
-
-    print(len(ITERbest_LIST), len(PARAM_LIST),
-          len(LOG_LOSS_LIST), len(AUC_LIST))
-    print("len(AUC_LIST) : %s  ; max(AUC_LIST) : %s" %
-          (min(LOG_LOSS_LIST), max(AUC_LIST)))
-
-    # break
-# -
-
-score = model.predict(dtest)
-auc = roc_auc_score(y_test, score)
-
-
-# +
 def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor, max_depth,
                                min_child_weight, eta, subsample, colsample_bytree):
 
@@ -479,6 +385,89 @@ def XGB_CV(max_depth,
     return (auc_score*2) - 1
 
 
-# -
+# # Main
 
-max(AUC_LIST)
+
+# +
+max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
+nrows = None  # 100000
+model_iteration = 2  # 1000
+data_dir = '/home/lpatel/projects/AKI/data_592v'
+colsample_bytree_weight_factor = 10000
+
+pp = pprint.PrettyPrinter()
+gain = None
+print("xgb.__version__ : ", xgb.__version__)
+
+
+train, test, weight = read_csvs(data_dir, nrows=nrows)
+X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
+    train, test, weight)
+w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
+w = {
+    'w1': w1,
+    'w2': w2,
+    'w3': w3,
+    'w4': w4,
+    'w5': w5
+}
+
+
+# +
+for current_w in w:
+    print("\n current_w : %s \n" % (current_w))
+
+    params = weighted_resampling_params(
+        w[current_w], colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
+    )
+    model, _ = model_iterate(model_iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample, colsample_bytree
+                             )
+
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    df = pd.DataFrame(model.get_score(importance_type='gain'), index=[0])
+    df.to_csv("/home/lpatel/aki/results/feature_importance_python_api_%s_%s.csv" %
+              (t, current_w), index=False)
+
+    score = model.predict(dtest)
+    auc = roc_auc_score(y_test, score)
+
+    AUC_LIST = []
+    LOG_LOSS_LIST = []
+    ITERbest_LIST = []
+    PARAM_LIST = []
+
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+
+    XGB_BO = BayesianOptimization(XGB_CV, {
+        'max_depth': (4, 10),
+        #                                      'n_estimators': (1, 10),
+        'colsample_bytree': (0.5, 0.9),
+        'subsample': (0.5, 0.8),
+        'min_child_weight': (1, 10),
+        'eta': (0.05, 0.3)
+    })
+
+    # +
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
+    log_file.flush()
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore')
+        XGB_BO.maximize(init_points=10, n_iter=100)
+
+    # +
+    df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
+                       "round": ITERbest_LIST, "param": PARAM_LIST})
+    df['param'] = df['param'].astype(str)
+
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    df.to_csv("/home/lpatel/aki/results/cv_result_baysian.csv"+t+"_w0", sep="|")
+    # -
+
+    print(len(ITERbest_LIST), len(PARAM_LIST),
+          len(LOG_LOSS_LIST), len(AUC_LIST))
+    print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
+          (min(LOG_LOSS_LIST), max(AUC_LIST)))
+
+    break
