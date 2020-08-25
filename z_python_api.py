@@ -391,8 +391,8 @@ def XGB_CV(max_depth,
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 nrows = None  # 100000
-colsample_bytree_weight_factor = 100000
-model_iteration = 2
+colsample_bytree_weight_factor = 10000
+model_iteration = 500
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -417,7 +417,7 @@ w = {
 # +
 for current_w in w:
 
-    current_w = 'w5'
+    #current_w = 'w5'
 
     print("\n current_w : %s \n" % (current_w))
 
@@ -475,4 +475,4 @@ for current_w in w:
     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 
-    break
+    # break
