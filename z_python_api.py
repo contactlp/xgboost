@@ -392,7 +392,7 @@ def XGB_CV(max_depth,
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 nrows = None  # 100000
 colsample_bytree_weight_factor = 10000
-model_iteration = 500
+model_iteration = 100
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 

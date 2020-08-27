@@ -106,4 +106,4 @@ R-package/src/Makevars
 venv
 .ipynb_checkpoints
 *.ipynb
-nohup.out
+nohup*.out
