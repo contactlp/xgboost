@@ -335,9 +335,13 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
             next_w, colsample_bytree_weight_factor,
             max_depth, min_child_weight, eta, subsample, colsample_bytree)
 
-        # xgb_model = model.save_raw().decode('utf-8')  # 'model.model'
-        xgb_model = 'model.model'
-        model.save_model(xgb_model)
+        bxgb_model = model.save_raw()  # .decode('utf-8')  # 'model.model'
+        # print(type(bxgb_model))
+        xgb_model = [b for b in bxgb_model]
+        # xgb_model = 'model.model'
+        # model.save_model(xgb_model)
+        # print(xgb_model)
+        # break
 
         score = model.predict(dtest)
         auc = roc_auc_score(y_test, score)
@@ -393,9 +397,9 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = 100000  # None
+nrows = None  # 100000  # None
 colsample_bytree_weight_factor = 10000
-model_iteration = 2
+model_iteration = 51
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -478,4 +482,4 @@ for current_w in w:
     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 
-    break
+    # break
