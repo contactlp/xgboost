@@ -315,7 +315,8 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
             ''' % (i))
 
         model = xgb.train(
-            params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1, callbacks=[MyCallback()], xgb_model=xgb_model
+            params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1,
+            callbacks=[MyCallback()], xgb_model=xgb_model
         )
 
         new_view_weight = find_new_view_importance(gain, current_w)
@@ -334,8 +335,10 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
             next_w, colsample_bytree_weight_factor,
             max_depth, min_child_weight, eta, subsample, colsample_bytree)
 
+        # xgb_model = model.save_raw().decode('utf-8')  # 'model.model'
         xgb_model = 'model.model'
         model.save_model(xgb_model)
+
         score = model.predict(dtest)
         auc = roc_auc_score(y_test, score)
         auc_score_list.append(auc)
@@ -390,9 +393,9 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = None  # 100000
+nrows = 100000  # None
 colsample_bytree_weight_factor = 10000
-model_iteration = 100
+model_iteration = 2
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -475,4 +478,4 @@ for current_w in w:
     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 
-    # break
+    break
