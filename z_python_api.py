@@ -320,6 +320,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         )
 
         new_view_weight = find_new_view_importance(gain, current_w)
+        print('new_view_weight: %s' % (new_view_weight))
         new_view_weight_normalized = normalize_dict_values(new_view_weight)
         print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
 
@@ -327,19 +328,19 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         for view in new_view_weight_normalized:
             next_w = [new_view_weight_normalized[view]
                       if w == view else w for w in next_w]
-
-        print("\n current_w first 10 : %s \n" % (w[current_w][:10]))
-        print("\n next_w first 10 : %s \n" % (next_w[:10]))
-
+        
+        print("\n current_w first 10 : %s ; sum : %s \n " % (w[current_w][:10], sum(w[current_w])))
+        print("\n next_w first 10 : %s    ; sum : %s \n"  % (next_w[:10]      , sum(next_w)))
+ 
         params = weighted_resampling_params(
             next_w, colsample_bytree_weight_factor,
             max_depth, min_child_weight, eta, subsample, colsample_bytree)
 
-        bxgb_model = model.save_raw()  # .decode('utf-8')  # 'model.model'
+        # bxgb_model = model.save_raw()  # .decode('utf-8')  # 'model.model'
         # print(type(bxgb_model))
-        xgb_model = [b for b in bxgb_model]
-        # xgb_model = 'model.model'
-        # model.save_model(xgb_model)
+        # xgb_model = [b for b in bxgb_model]
+        xgb_model = 'model.model'
+        model.save_model(xgb_model)
         # print(xgb_model)
         # break
 
@@ -397,9 +398,9 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = None  # 100000  # None
+nrows = 100000  # None
 colsample_bytree_weight_factor = 10000
-model_iteration = 51
+model_iteration = 2
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -441,45 +442,48 @@ for current_w in w:
 
     score = model.predict(dtest)
     auc = roc_auc_score(y_test, score)
+    break
 
-    AUC_LIST = []
-    LOG_LOSS_LIST = []
-    ITERbest_LIST = []
-    PARAM_LIST = []
+#     AUC_LIST = []
+#     LOG_LOSS_LIST = []
+#     ITERbest_LIST = []
+#     PARAM_LIST = []
 
-    dtrain = xgb.DMatrix(X_train, label=y_train)
+#     dtrain = xgb.DMatrix(X_train, label=y_train)
 
-    XGB_BO = BayesianOptimization(XGB_CV, {
-        'max_depth': (4, 10),
-        #                                      'n_estimators': (1, 10),
-        'colsample_bytree': (0.5, 0.9),
-        'subsample': (0.5, 0.8),
-        'min_child_weight': (1, 10),
-        'eta': (0.05, 0.3)
-    })
+#     XGB_BO = BayesianOptimization(XGB_CV, {
+#         'max_depth': (4, 10),
+#         #                                      'n_estimators': (1, 10),
+#         'colsample_bytree': (0.5, 0.9),
+#         'subsample': (0.5, 0.8),
+#         'min_child_weight': (1, 10),
+#         'eta': (0.05, 0.3)
+#     })
 
-    # +
-    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
-    log_file.flush()
+#     # +
+#     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+#     log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
+#     log_file.flush()
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings('ignore')
-        XGB_BO.maximize(init_points=10, n_iter=100)
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings('ignore')
+#         XGB_BO.maximize(init_points=10, n_iter=100)
 
-    # +
-    df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
-                       "round": ITERbest_LIST, "param": PARAM_LIST})
-    df['param'] = df['param'].astype(str)
+#     # +
+#     df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
+#                        "round": ITERbest_LIST, "param": PARAM_LIST})
+#     df['param'] = df['param'].astype(str)
 
-    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-    df.to_csv("/home/lpatel/aki/results/cv_result_baysian_%s_%s.csv" %
-              (t, current_w), sep="|")
-    # -
+#     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+#     df.to_csv("/home/lpatel/aki/results/cv_result_baysian_%s_%s.csv" %
+#               (t, current_w), sep="|")
+#     # -
 
-    print(len(ITERbest_LIST), len(PARAM_LIST),
-          len(LOG_LOSS_LIST), len(AUC_LIST))
-    print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
-          (min(LOG_LOSS_LIST), max(AUC_LIST)))
+#     print(len(ITERbest_LIST), len(PARAM_LIST),
+#           len(LOG_LOSS_LIST), len(AUC_LIST))
+#     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
+#           (min(LOG_LOSS_LIST), max(AUC_LIST)))
+#    break
+# -
 
-    # break
+
