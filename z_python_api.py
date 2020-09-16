@@ -92,7 +92,7 @@ def find_new_view_importance(last_round_feature_weight, current_w):
     views_weight = {}
     if len(unused_views) != 0:
         for view in unused_views:
-            views_weight[view] = min_feat_weight * 0.9
+            views_weight[view] = min_feat_weight * 0.5
 
     # used view weight adding
     for feature in last_round_feature_weight:
@@ -107,8 +107,10 @@ def find_new_view_importance(last_round_feature_weight, current_w):
 
 def normalize_dict_values(d):
     '''
-    input :  {0.0032258064516129: 48.354329420666666, 0.000985221674876847: 0.3671875}
-    output : {0.0032258064516129: 0.9924635454064804, 0.000985221674876847: 0.007536454593519575}
+    input :  {0.0032258064516129: 48.354329420666666,
+        0.000985221674876847: 0.3671875}
+    output : {0.0032258064516129: 0.9924635454064804,
+        0.000985221674876847: 0.007536454593519575}
     '''
     output = {}
     total = sum(d.values())
@@ -122,8 +124,10 @@ def normalize_dict_values(d):
 
 def divide_views_weight_by_number_of_features(d):
     '''
-    input  : {0.0032258064516129: 0.9924635454064804, 0.000985221674876847: 0.007536454593519575}
-    output : {0.0032258064516129: 0.0024444914911489666, 0.000985221674876847: 1.8562696043151663e-05}
+    input  : {0.0032258064516129: 0.9924635454064804,
+        0.000985221674876847: 0.007536454593519575}
+    output : {0.0032258064516129: 0.0024444914911489666,
+        0.000985221674876847: 1.8562696043151663e-05}
     '''
 
     # TODO: automate this part 0.000985 and 0.003225
@@ -231,14 +235,11 @@ def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_wei
     sendable_colsample_bytree_weight = sendable_float_to_cpp(
         colsample_bytree_weight, colsample_bytree_weight_factor)
 
-    #print('\n colsample_bytree_weight', colsample_bytree_weight)
+    # print('\n colsample_bytree_weight', colsample_bytree_weight)
     print('\n colsample_bytree_weight', "min:", min(
-        colsample_bytree_weight), ";  max :", max(colsample_bytree_weight))
+        colsample_bytree_weight), ";  max :", max(colsample_bytree_weight), colsample_bytree_weight)
     print('\n sendable_colsample_bytree_weight', "min:", min(
-        sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight))
-
-    print('sendable_colsample_bytree_weight : length :', len(
-        sendable_colsample_bytree_weight),  sendable_colsample_bytree_weight)
+        sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight), sendable_colsample_bytree_weight)
 
     params = {
         'booster': 'gbtree',
@@ -361,9 +362,9 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = 100000  # None
-colsample_bytree_weight_factor = 10000
-model_iteration = 2
+nrows = None  # 100000  # None
+colsample_bytree_weight_factor = 1000000
+model_iteration = 20
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -388,7 +389,7 @@ w = {
 # +
 for current_w in w:
 
-    #current_w = 'w5'
+    # current_w = 'w5'
 
     print("\n current_w : %s \n" % (current_w))
 
@@ -408,46 +409,45 @@ for current_w in w:
 
     score = model.predict(dtest)
     auc = roc_auc_score(y_test, score)
-    break
-
-#     AUC_LIST = []
-#     LOG_LOSS_LIST = []
-#     ITERbest_LIST = []
-#     PARAM_LIST = []
-
-#     dtrain = xgb.DMatrix(X_train, label=y_train)
-
-#     XGB_BO = BayesianOptimization(XGB_CV, {
-#         'max_depth': (4, 10),
-#         #                                      'n_estimators': (1, 10),
-#         'colsample_bytree': (0.5, 0.9),
-#         'subsample': (0.5, 0.8),
-#         'min_child_weight': (1, 10),
-#         'eta': (0.05, 0.3)
-#     })
-
-#     # +
-#     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-#     log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
-#     log_file.flush()
-
-#     with warnings.catch_warnings():
-#         warnings.filterwarnings('ignore')
-#         XGB_BO.maximize(init_points=10, n_iter=100)
-
-#     # +
-#     df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
-#                        "round": ITERbest_LIST, "param": PARAM_LIST})
-#     df['param'] = df['param'].astype(str)
-
-#     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
-#     df.to_csv("/home/lpatel/aki/results/cv_result_baysian_%s_%s.csv" %
-#               (t, current_w), sep="|")
-#     # -
-
-#     print(len(ITERbest_LIST), len(PARAM_LIST),
-#           len(LOG_LOSS_LIST), len(AUC_LIST))
-#     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
-#           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 #    break
-# -
+
+    AUC_LIST = []
+    LOG_LOSS_LIST = []
+    ITERbest_LIST = []
+    PARAM_LIST = []
+
+    dtrain = xgb.DMatrix(X_train, label=y_train)
+
+    XGB_BO = BayesianOptimization(XGB_CV, {
+        'max_depth': (4, 10),
+        #                                      'n_estimators': (1, 10),
+        'colsample_bytree': (0.5, 0.9),
+        'subsample': (0.5, 0.8),
+        'min_child_weight': (1, 10),
+        'eta': (0.05, 0.3)
+    })
+
+    # +
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    log_file = open('/home/lpatel/aki/results/test.log'+t, 'a')
+    log_file.flush()
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore')
+        XGB_BO.maximize(init_points=10, n_iter=100)
+
+    # +
+    df = pd.DataFrame({"auc": AUC_LIST, "log": LOG_LOSS_LIST,
+                       "round": ITERbest_LIST, "param": PARAM_LIST})
+    df['param'] = df['param'].astype(str)
+
+    t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
+    df.to_csv("/home/lpatel/aki/results/cv_result_baysian_%s_%s.csv" %
+              (t, current_w), sep="|")
+    # -
+
+    print(len(ITERbest_LIST), len(PARAM_LIST),
+          len(LOG_LOSS_LIST), len(AUC_LIST))
+    print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
+          (min(LOG_LOSS_LIST), max(AUC_LIST)))
+    break
