@@ -110,6 +110,23 @@ def normalize_dict_values(d):
     total = sum(d.values())
     for i in d:
         output[i] = d[i]/total
+        
+    print ("outut: %s"%(output))
+    ## TODO: automate this part
+    # new_view_weight: {0.0032258064516129: 14.2817382715, 0.000985221674876847: 0.3671875}
+    
+#     output2 ={}
+    
+#     for view in output:
+#         if round(view) == round(0.000985):
+#             output2[view] = output[view]/406
+            
+#         elif round(view) == round(0.003225):
+#             output2[view] = output[view]/186
+#         else:
+#             break
+#     ## TODO: automate this part
+    
     return output
 
 
@@ -182,87 +199,6 @@ def find_all_weight(weight, X_train):
     return (weight1, weight2, weight3, weight4, weight5)
 
 
-# def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor):
-
-#     # colsample_bytree_weight needs to be tupple
-#     colsample_bytree_weight = tuple(colsample_bytree_weight_lst)
-#     # colsample_bytree_weight_factor need to int and big enough so small float can be represented as int.
-#     colsample_bytree_weight_factor = colsample_bytree_weight_factor
-
-#     sendable_colsample_bytree_weight = sendable_float_to_cpp(
-#         colsample_bytree_weight, colsample_bytree_weight_factor)
-
-#     #print('\n colsample_bytree_weight', colsample_bytree_weight)
-#     print('\n colsample_bytree_weight', "min:", min(
-#         colsample_bytree_weight), ";  max :", max(colsample_bytree_weight))
-#     print('\n sendable_colsample_bytree_weight', "min:", min(
-#         sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight))
-#     params = {
-#         'booster': 'gbtree',
-#         'max_depth': 10,
-#         'min_child_weight': 10,
-#         # 'eta' : 0.01,
-#         'objective': 'binary:logistic',
-#         'n_jobs': 20,
-#         'silent': True,
-#         'eval_metric': 'logloss',
-#         'subsample': 0.8,
-#         'colsample_bytree': 0.5,
-#         'seed': 1001,
-#         'colsample_bytree_weight': sendable_colsample_bytree_weight,
-#         'colsample_bytree_weight_factor': colsample_bytree_weight_factor,
-#     }
-
-#     return params
-
-
-# def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor):
-#     auc_score_list = []
-#     xgb_model = None
-
-#     for i in range(iteration):
-#         print('''
-#             \n
-#             ----------------------------------------------------------------------------------
-#             ------------------------------- model_iteration: %s-------------------------------
-#             ----------------------------------------------------------------------------------
-#             \n
-#             ''' % (i))
-
-#         model = xgb.train(
-#             params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1, callbacks=[MyCallback()], xgb_model=xgb_model
-#         )
-
-#         new_view_weight = find_new_view_importance(gain, current_w)
-#         new_view_weight_normalized = normalize_dict_values(new_view_weight)
-#         print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
-
-#         next_w = w[current_w].copy()
-#         for view in new_view_weight_normalized:
-#             next_w = [new_view_weight_normalized[view]
-#                       if w == view else w for w in next_w]
-
-#         print("\n current_w first 10 : %s \n" % (w[current_w][:10]))
-#         print("\n next_w first 10 : %s \n" % (next_w[:10]))
-
-#         params = weighted_resampling_params(
-#             next_w, colsample_bytree_weight_factor)
-
-#         xgb_model = xgb_model.save_raw()  # 'model.model'
-#         # model.save_model(xgb_model)
-#         score = model.predict(dtest)
-#         auc = roc_auc_score(y_test, score)
-#         auc_score_list.append(auc)
-
-#         if max(auc_score_list[-50:]) < max(auc_score_list):
-#             print("break")
-#             break
-
-#     print("model.get_score_gain : ", model.get_score(importance_type='gain'))
-#     print("model.get_fscore     : ", model.get_fscore())
-
-#     return model, i
-
 
 def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor, max_depth,
                                min_child_weight, eta, subsample, colsample_bytree):
@@ -328,10 +264,12 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         for view in new_view_weight_normalized:
             next_w = [new_view_weight_normalized[view]
                       if w == view else w for w in next_w]
-        
-        print("\n current_w first 10 : %s ; sum : %s \n " % (w[current_w][:10], sum(w[current_w])))
-        print("\n next_w first 10 : %s    ; sum : %s \n"  % (next_w[:10]      , sum(next_w)))
- 
+
+        print("\n current_w first 10 : %s ; sum : %s \n " %
+              (w[current_w][:10], sum(w[current_w])))
+        print("\n next_w first 10 : %s    ; sum : %s \n" %
+              (next_w[:10], sum(next_w)))
+
         params = weighted_resampling_params(
             next_w, colsample_bytree_weight_factor,
             max_depth, min_child_weight, eta, subsample, colsample_bytree)
@@ -484,6 +422,3 @@ for current_w in w:
 #     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
 #           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 #    break
-# -
-
-
