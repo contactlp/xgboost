@@ -105,7 +105,6 @@ def find_new_view_importance(last_round_feature_weight, current_w):
     return views_weight
 
 
-
 def normalize_dict_values(d):
     '''
     input :  {0.0032258064516129: 48.354329420666666, 0.000985221674876847: 0.3671875}
@@ -115,9 +114,9 @@ def normalize_dict_values(d):
     total = sum(d.values())
     for i in d:
         output[i] = d[i]/total
-        
-    print ("normalize_dict_values : %s"%(output))
-    
+
+    print("normalize_dict_values : %s" % (output))
+
     return output
 
 
@@ -128,27 +127,29 @@ def divide_views_weight_by_number_of_features(d):
     '''
 
     # TODO: automate this part 0.000985 and 0.003225
-    
-    output2 ={}
-    
+
+    output2 = {}
+
     for view in d:
         if round(view) == round(0.000985):
-            output2[view] = d[view]/186   #406
-            
+            output2[view] = d[view]/186  # 406
+
         elif round(view) == round(0.003225):
-            output2[view] = d[view]/406  #186
+            output2[view] = d[view]/406  # 186
         else:
             print("\n \n issue in divide_views_weight_by_number_of_features \n \n")
             break
-    ## TODO: automate this part
-    
+    # TODO: automate this part
+
     return output2
 
+
 def normalized_and_divide_views_weight_by_number_of_features(d):
-    
+
     d = normalize_dict_values(d)
     d = divide_views_weight_by_number_of_features(d)
     return d
+
 
 def MyCallback():
     def callback(env):
@@ -219,7 +220,6 @@ def find_all_weight(weight, X_train):
     return (weight1, weight2, weight3, weight4, weight5)
 
 
-
 def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor, max_depth,
                                min_child_weight, eta, subsample, colsample_bytree):
 
@@ -236,9 +236,10 @@ def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_wei
         colsample_bytree_weight), ";  max :", max(colsample_bytree_weight))
     print('\n sendable_colsample_bytree_weight', "min:", min(
         sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight))
-    
-    print('sendable_colsample_bytree_weight : length :', len(sendable_colsample_bytree_weight),  sendable_colsample_bytree_weight)
-    
+
+    print('sendable_colsample_bytree_weight : length :', len(
+        sendable_colsample_bytree_weight),  sendable_colsample_bytree_weight)
+
     params = {
         'booster': 'gbtree',
         'max_depth': int(max_depth),
@@ -277,10 +278,11 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
             params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1,
             callbacks=[MyCallback()], xgb_model=xgb_model
         )
-        print ('gain : %s'%(gain))
+        print('gain : %s' % (gain))
         new_view_weight = find_new_view_importance(gain, current_w)
         print('new_view_weight: %s' % (new_view_weight))
-        new_view_weight_normalized = normalized_and_divide_views_weight_by_number_of_features(new_view_weight)
+        new_view_weight_normalized = normalized_and_divide_views_weight_by_number_of_features(
+            new_view_weight)
         print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
 
         next_w = w[current_w].copy()
@@ -449,70 +451,3 @@ for current_w in w:
 #           (min(LOG_LOSS_LIST), max(AUC_LIST)))
 #    break
 # -
-
-def find_new_view_importance(last_round_feature_weight_gain_dict, current_w_str):
-    
-    # how many view are there ?
-    features_per_view, feature_weight = find_view_weights(w[current_w_str])
-    unused_views = set(features_per_view)
-
-    # find view which has not been used
-    for feature in last_round_feature_weight_gain_dict:
-        # print(feature)
-        unused_views = unused_views - set([feature_weight[feature]])
-
-    # min weight of last round features
-    min_feat_weight = min(last_round_feature_weight_gain_dict.values())
-
-    # give weight if there is unused view
-    views_weight = {}
-    if len(unused_views) != 0:
-        for view in unused_views:
-            views_weight[view] = min_feat_weight * 0.05
-
-    # used view weight adding
-    for feature in last_round_feature_weight_gain_dict:
-        view = feature_weight[feature]
-        if view not in views_weight:
-            views_weight[view] = last_round_feature_weight_gain_dict[feature]
-        else:
-            views_weight[view] = views_weight[view] + \
-                last_round_feature_weight_gain_dict[feature]
-    
-    
-    return views_weight
-
-last_round_feature_weight_gain_dict= {'2160.0_change': 37.203125}
-find_new_view_importance(last_round_feature_weight_gain_dict,'w1')
-
-'''
-            ----------------------------------------------------------------------------------
-            ------------------------------- model_iteration: 1-------------------------------
-            ----------------------------------------------------------------------------------
-            
-
-            
-update_method: 0
-
-------------------starting callback------------------
-
- gain {'2160.0': 6.190694166666667, '48642.3_change': 4.921875, '09.96.72': 0.3671875, '42637.9': 0.202697754, '2160.0_change': 37.0390625}
-
-------------------ending callback------------------
-[0]	train-logloss:0.67370	test-logloss:0.67371
-gain : {'2160.0': 6.190694166666667, '48642.3_change': 4.921875, '09.96.72': 0.3671875, '42637.9': 0.202697754, '2160.0_change': 37.0390625}
-new_view_weight: {0.0032258064516129: 48.354329420666666, 0.000985221674876847: 0.3671875}
-outut: {0.0032258064516129: 0.9924635454064804, 0.000985221674876847: 0.007536454593519575}
-new_view_weight_normalized: {0.0032258064516129: 0.9924635454064804, 0.000985221674876847: 0.007536454593519575}
-
- current_w first 10 : [0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847, 0.000985221674876847] ; sum : 0.9999999999999879 
- 
-
- next_w first 10 : [0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575, 0.007536454593519575]    ; sum : 187.6580200105744 :   len : 592 
-
-
- colsample_bytree_weight min: 0.007536454593519575 ;  max : 0.9924635454064804
-
- sendable_colsample_bytree_weight min: 75 ;  max : 9925
-sendable_colsample_bytree_weight : length : 592 (75,
-'''
