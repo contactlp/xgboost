@@ -451,3 +451,5 @@ for current_w in w:
     print("min(LOG_LOSS_LIST): %s  ; max(AUC_LIST) : %s" %
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
     # break
+
+# started at wed Sep 16 1:50 PM
