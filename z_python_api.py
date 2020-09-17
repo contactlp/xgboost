@@ -312,7 +312,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         auc = roc_auc_score(y_test, score)
         auc_score_list.append(auc)
 
-        if max(auc_score_list[-50:]) < max(auc_score_list):
+        if max(auc_score_list[-model_iteration:]) < max(auc_score_list):
             break
 
     print("model.get_score_gain : ", model.get_score(importance_type='gain'))
