@@ -312,7 +312,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         auc = roc_auc_score(y_test, score)
         auc_score_list.append(auc)
 
-        if max(auc_score_list[-model_iteration:]) < max(auc_score_list):
+        if max(auc_score_list[-early_stopping_n:]) < max(auc_score_list):
             break
 
     print("model.get_score_gain : ", model.get_score(importance_type='gain'))
@@ -364,7 +364,8 @@ def XGB_CV(max_depth,
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 nrows = None  # 100000
 colsample_bytree_weight_factor = 1000000
-model_iteration = 20
+model_iteration = 500
+early_stopping_n = 20
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -380,9 +381,9 @@ w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
 w = {
     'w1': w1,
     'w2': w2,
-    'w3': w3,
-    'w4': w4,
-    'w5': w5
+    # 'w3': w3,
+    # 'w4': w4,
+    # 'w5': w5
 }
 
 
