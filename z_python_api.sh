@@ -30,3 +30,4 @@ $env/pip install -r requiremnets.txt
 $env/python3 /home/lpatel/projects/repos/xgboost/z_python_api.py
 
 ls -lrt /home/lpatel/aki/results/ |tail -10
+ls -rt /home/lpatel/aki/results/cv* |tail -10
