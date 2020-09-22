@@ -312,7 +312,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
         auc = roc_auc_score(y_test, score)
         auc_score_list.append(auc)
 
-        if max(auc_score_list[-early_stopping_n:]) < max(auc_score_list):
+        if max(auc_score_list[-early_stopping_n:]) < early_stopping_at * max(auc_score_list):
             break
 
     print("model.get_score_gain : ", model.get_score(importance_type='gain'))
@@ -366,6 +366,7 @@ nrows = None  # 100000
 colsample_bytree_weight_factor = 1000000
 model_iteration = 500
 early_stopping_n = 20
+early_stopping_at = 0.9998
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
