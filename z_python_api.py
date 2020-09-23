@@ -33,8 +33,36 @@ import warnings
 import pprint
 
 
-def sendable_float_to_cpp(lst, colsample_bytree_weight_factor):
-    return tuple([round(n * colsample_bytree_weight_factor) for n in lst])
+def find_float_signfigance(float_lst, float_signfigance):
+
+    mi = min(float_lst)
+    print(mi)
+    mi = str(mi)
+    mi = mi.replace('0.', '')
+
+    leading_zeros = 0
+    if 'e' not in mi:
+        for ch in mi:
+            if ch == '0':
+                leading_zeros += 1
+            else:
+                break
+    else:
+        print("e in float")
+        mi, leading_zeros = mi.split('e-')
+        leading_zeros = int(leading_zeros)
+        leading_zeros -= 1
+
+    float_signfigance = float_signfigance + leading_zeros
+
+    return (float_signfigance)
+
+
+def sendable_float_to_cpp(lst):
+
+    colsample_bytree_weight_factor = find_float_signfigance(
+        lst, float_signfigance)
+    return tuple([round(n * 10**colsample_bytree_weight_factor) for n in lst])
 
 
 def fmap(trees):
@@ -224,16 +252,16 @@ def find_all_weight(weight, X_train):
     return (weight1, weight2, weight3, weight4, weight5)
 
 
-def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_weight_factor, max_depth,
+def weighted_resampling_params(colsample_bytree_weight_lst, max_depth,
                                min_child_weight, eta, subsample, colsample_bytree):
 
     # colsample_bytree_weight needs to be tupple
     colsample_bytree_weight = tuple(colsample_bytree_weight_lst)
-    # colsample_bytree_weight_factor need to int and big enough so small float can be represented as int.
-    colsample_bytree_weight_factor = colsample_bytree_weight_factor
 
     sendable_colsample_bytree_weight = sendable_float_to_cpp(
-        colsample_bytree_weight, colsample_bytree_weight_factor)
+        colsample_bytree_weight)
+    colsample_bytree_weight_factor = find_float_signfigance(
+        colsample_bytree_weight, float_signfigance)
 
     # print('\n colsample_bytree_weight', colsample_bytree_weight)
     print('\n colsample_bytree_weight', "min:", min(
@@ -260,7 +288,7 @@ def weighted_resampling_params(colsample_bytree_weight_lst, colsample_bytree_wei
     return params
 
 
-def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree_weight_factor,
+def model_iterate(iteration, params, dtrain, dtest, MyCallback,
                   max_depth, min_child_weight, eta, subsample, colsample_bytree
                   ):
     auc_score_list = []
@@ -297,7 +325,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback, colsample_bytree
               (next_w[:10], sum(next_w), len(next_w)))
 
         params = weighted_resampling_params(
-            next_w, colsample_bytree_weight_factor,
+            next_w,
             max_depth, min_child_weight, eta, subsample, colsample_bytree)
 
         # bxgb_model = model.save_raw()  # .decode('utf-8')  # 'model.model'
@@ -331,13 +359,13 @@ def XGB_CV(max_depth,
     global PARAM_LIST
 
     params = weighted_resampling_params(
-        w[current_w], colsample_bytree_weight_factor, max_depth,
+        w[current_w], max_depth,
         min_child_weight, eta, subsample, colsample_bytree
     )
     PARAM_LIST.append(params)
 
     model, i = model_iterate(model_iteration, params, dtrain, dtest,
-                             MyCallback, colsample_bytree_weight_factor, max_depth,
+                             MyCallback, max_depth,
                              min_child_weight, eta, subsample, colsample_bytree)
 
     score = model.predict(dtest)
@@ -362,11 +390,11 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = None  # 100000
-colsample_bytree_weight_factor = 1000000
-model_iteration = 500
-early_stopping_n = 20
-early_stopping_at = 0.9998
+nrows = None  # 100000     # None will load all the data
+float_signfigance = 2      # use at least 2 , larger int, better accuracy
+model_iteration = 500      # ideal 500
+early_stopping_n = 20      # larger int, better accuracy
+early_stopping_at = 0.98  # larger float(ideal 0.9998), better accuracy
 data_dir = '/home/lpatel/projects/AKI/data_592v'
 
 
@@ -396,11 +424,11 @@ for current_w in w:
     print("\n current_w : %s \n" % (current_w))
 
     params = weighted_resampling_params(
-        w[current_w], colsample_bytree_weight_factor, max_depth, min_child_weight, eta, subsample,
+        w[current_w], max_depth, min_child_weight, eta, subsample,
         colsample_bytree
     )
     model, _ = model_iterate(model_iteration, params, dtrain, dtest, MyCallback,
-                             colsample_bytree_weight_factor, max_depth, min_child_weight, eta,
+                             max_depth, min_child_weight, eta,
                              subsample, colsample_bytree
                              )
 
