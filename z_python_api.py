@@ -392,7 +392,7 @@ def XGB_CV(max_depth,
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
 nrows = None  # 100000     # None will load all the data
 float_signfigance = 2      # use at least 2 , larger int, better accuracy
-model_iteration = 500      # ideal 500
+model_iteration = 100      # ideal 500
 early_stopping_n = 20      # larger int, better accuracy
 early_stopping_at = 0.98  # larger float(ideal 0.9998), better accuracy
 data_dir = '/home/lpatel/projects/AKI/data_592v'
