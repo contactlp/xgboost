@@ -2,16 +2,19 @@ import random
 
 
 def normalize(lst):
-    '''
-    input: un-normalize list
-    output: normalize list
+    """Normalize List
 
+    Args:
+        lst (list): int/float list
+
+    Returns:
+        list: return noramlzed list
 
     print(normalize([1, 2, 3]))
     [0.16666666666666666, 0.3333333333333333, 0.5]
     print(normalize([0.16666666666666666, 0.3333333333333333, 0.5]))
     [0.16666666666666666, 0.3333333333333333, 0.5]
-    '''
+    """
     total = float(sum(lst))
     lst = [i/total for i in lst]
 
@@ -19,15 +22,20 @@ def normalize(lst):
 
 
 def cumulative(lst):
-    """
-    input  : int/float list
-    output : Running total list
+    """convert list in running/cummulative total
+
+    Args:
+        lst (list[int/float]): list made of int or float
+
+    Returns:
+        list: return list which has running total.
 
     print(cumulative([1, 2, 3]))
     # [1.0, 3.0, 6.0]
     print(cumulative([0.16666666666666666, 0.3333333333333333, 0.5]))
     # [0.16666666666666666, 0.5, 1.0]
     """
+
     output_lst = []
     running_total = 0.0
     for i in lst:
@@ -38,11 +46,21 @@ def cumulative(lst):
 
 
 def find_index_less_or_equal(float_lst, float_n):
-    """
-    print(find_index_less_or_equal([0.7, 0.8999999999999999, 0.9999999999999999], 0.9))
-    #1
-    print(find_index_less_or_equal([0.7, 0.8999999999999999, 0.9999999999999999], 0.8))
-    #0
+    """find last index of list where float_n is smaller or equal to
+
+    Args:
+        float_lst (list[float]): float list
+        float_n (float): find index for this number from float_lst
+
+    Returns:
+        int: index of float_lst based on float_n
+
+    print(find_index_less_or_equal(
+        [0.7, 0.8999999999999999, 0.9999999999999999], 0.9))
+    # 1
+    print(find_index_less_or_equal(
+        [0.7, 0.8999999999999999, 0.9999999999999999], 0.8))
+    # 0
     """
     index = 0
     for i in range(len(float_lst)):
@@ -55,14 +73,21 @@ def find_index_less_or_equal(float_lst, float_n):
 
 
 def choice(lst, p, replace=False):
-    """
-    input: list
-    output : selected 1 object from list based on p
+    """select element from list based on p probability distrubution.
+
+    Args:
+        lst (list[int/float]): list made of int or float
+        p (int/float): probability distribution.
+        replace (bool, optional): [description]. Defaults to False.
+
+    Returns:
+        [int/float]: select element [int/float] from lst based on p probability distrubution
 
     print(choice([1, 2, 3], [2, 5, 2], replace=False))
-    #2
-    #1,2,3 all possible based on probabilities.    
+    # 2
+    # 1,2,3 all possible based on probabilities.
     """
+
     if replace != False:
         return None
     if len(p) != len(lst):
@@ -83,8 +108,8 @@ def choice(lst, p, replace=False):
     # index                   : %s
     # """ % (lst, p, normalized_p, normalized_cumulative_p, random_float_n, index)
     #       )
-    #
     # print(index)
+
     return lst[index]
 
 
