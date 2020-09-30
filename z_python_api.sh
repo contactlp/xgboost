@@ -31,4 +31,8 @@ $env/python3 /home/lpatel/projects/repos/xgboost/z_python_api.py
 
 ls -lrt /home/lpatel/aki/results/ |tail -10
 ls -rt /home/lpatel/aki/results/cv* |tail -10 && ps -ef|grep python_api
-#python -m cProfile z_python_api.py
+#python -m cProfile z_python_api.py &> c_profile_nohup.out &
+
+# nohup python -m cProfile z_python_api.py > nohup2.out 2>&1 &
+#  python -m cProfile -o myscript.cprof myscript.py
+#nohup python -m cProfile -o nohup_profile.cprof z_python_api.py > nohup_profile.out 2>&1 &
