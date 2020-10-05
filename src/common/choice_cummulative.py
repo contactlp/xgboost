@@ -110,7 +110,19 @@ def choice(lst, p, replace=False):
     #       )
     # print(index)
 
-    return lst[index]
+    return index
+
+
+def choice_n(n, lst, p, replace=False):
+    output = []
+
+    for i in range(n):
+        index = choice(lst, p, replace=False)
+        selected = lst[index]
+        output.append(selected)
+        del lst[index]
+        del p[index]
+    return output
 
 
 def test_choice(lst=[1, 2, 3], p=[7, 2, 1], replace=False):
@@ -136,4 +148,9 @@ def test_choice(lst=[1, 2, 3], p=[7, 2, 1], replace=False):
     return (d)
 
 
+def test_choice_n(n=2, lst=[1, 2, 3, 4, 5], p=[10, 5, 3, 2, 1], replace=False):
+    return sorted(choice_n(n, lst, p))
+
+
 print(test_choice())
+print(test_choice_n())
