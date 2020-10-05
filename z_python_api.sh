@@ -1,5 +1,6 @@
 set -x
 echo "----------------------------------------------------------------------------------------------"
+#sudo yum install boost boost-thread boost-devel
 #conda create -n auto_weight python=3
 conda_env=auto_weight
 env=/opt/anaconda3/envs/$conda_env/bin
