@@ -67,7 +67,8 @@ int find_index_less_or_equal(std::vector<float> a, float n)
     return index;
 }
 
-float choice(std::vector<float> input, std::vector<float> p)
+template <typename TUU>
+int choice(std::vector<TUU> input, std::vector<TUU> p)
 {
     // std::cout << "\nChoice started\n";
 
@@ -78,8 +79,8 @@ float choice(std::vector<float> input, std::vector<float> p)
     }
     int conversion = 1; // will be used to divide by 1.0
     // std::vector<float> float_vector = {};
-    std::vector<float> normalized = {};
-    std::vector<float> cumulatived = {};
+    std::vector<TUU> normalized = {};
+    std::vector<TUU> cumulatived = {};
 
     // convert_vec_to_float(p, conversion, float_vector);
     normalize(p, normalized);
@@ -95,37 +96,57 @@ float choice(std::vector<float> input, std::vector<float> p)
 
     int index = find_index_less_or_equal(cumulatived, r);
     float selected;
-    selected = input.at(index);
+    // selected = input.at(index);
 
     // std::cout << "\nChoice ended\n";
-    return selected;
+    return index;
 }
 
-// int main()
-// {
+template <typename TUU>
+std::vector<TUU> choice_n(int n, std::vector<TUU> input, std::vector<int> p)
+{
+    std::vector<float> pf = {};
+    convert_vec_to_float(p, 1, pf);
 
-//     std::vector<float> x = {0.1, 0.2, 0.3, 0.4, 0.5};
-//     std::vector<float> y = {0.5, 0.3, 0.2, 0.07, 0.03};
+    std::vector<TUU> output;
+    for (int i = 0; i < n; i++)
+    {
 
-//     // std::vector<int> a = {1, 2, 3, 4, 5};
-//     // int b = 1;
-//     // std::vector<float> c = {};
-//     // std::vector<float> d = {};
-//     // std::vector<float> e = {};
-//     // convert_vec_to_float(a, b, c);
-//     // printv(c);
-//     // normalize(c, d);
-//     // printv(d);
-//     // cumulative(d, e);
-//     // printv(e);
-//     // int index = find_index_less_or_equal(e, 0.05);
-//     // std::cout << index;
+        int index = choice(input, pf);
+        float item = input.at(index);
+        output.push_back(item);
+        input.erase(input.begin() + index);
+        pf.erase(pf.begin() + index);
+    }
+    return output;
+}
 
-//     for (int i = 0; i <= 10; i++)
-//     {
-//         std::cout << choice(x, y);
-//         std::cout << '\n';
-//     }
+int main()
+{
 
-//     return 0;
-// }
+    std::vector<float> a = {1, 2, 3, 4, 5};
+    std::vector<int> p = {10, 5, 3, 2, 1};
+
+    // std::vector<int> a = {1, 2, 3, 4, 5};
+    // int b = 1;
+    // std::vector<float> c = {};
+    // std::vector<float> d = {};
+    // std::vector<float> e = {};
+    // convert_vec_to_float(a, b, c);
+    // printv(c);
+    // normalize(c, d);
+    // printv(d);
+    // cumulative(d, e);
+    // printv(e);
+    // int index = find_index_less_or_equal(e, 0.05);
+    // std::cout << index;
+
+    for (int i = 0; i <= 10; i++)
+    {
+        int n = 3;
+        printv(choice_n(n, a, p));
+        std::cout << '\n';
+    }
+
+    return 0;
+}
