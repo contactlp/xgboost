@@ -68,7 +68,7 @@ int find_index_less_or_equal(std::vector<float> a, float n)
 }
 
 template <typename TUU>
-int choice(std::vector<TUU> input, std::vector<TUU> p)
+int choice(std::vector<TUU> input, std::vector<float> p)
 {
     // std::cout << "\nChoice started\n";
 
@@ -79,8 +79,8 @@ int choice(std::vector<TUU> input, std::vector<TUU> p)
     }
     int conversion = 1; // will be used to divide by 1.0
     // std::vector<float> float_vector = {};
-    std::vector<TUU> normalized = {};
-    std::vector<TUU> cumulatived = {};
+    std::vector<float> normalized = {};
+    std::vector<float> cumulatived = {};
 
     // convert_vec_to_float(p, conversion, float_vector);
     normalize(p, normalized);
@@ -117,36 +117,37 @@ std::vector<TUU> choice_n(int n, std::vector<TUU> input, std::vector<int> p)
         output.push_back(item);
         input.erase(input.begin() + index);
         pf.erase(pf.begin() + index);
+        //
     }
     return output;
 }
 
-int main()
-{
+// int main()
+// {
 
-    std::vector<float> a = {1, 2, 3, 4, 5};
-    std::vector<int> p = {10, 5, 3, 2, 1};
+//     std::vector<float> a = {1, 2, 3, 4, 5};
+//     std::vector<int> p = {10, 5, 3, 2, 1};
 
-    // std::vector<int> a = {1, 2, 3, 4, 5};
-    // int b = 1;
-    // std::vector<float> c = {};
-    // std::vector<float> d = {};
-    // std::vector<float> e = {};
-    // convert_vec_to_float(a, b, c);
-    // printv(c);
-    // normalize(c, d);
-    // printv(d);
-    // cumulative(d, e);
-    // printv(e);
-    // int index = find_index_less_or_equal(e, 0.05);
-    // std::cout << index;
+//     // std::vector<int> a = {1, 2, 3, 4, 5};
+//     // int b = 1;
+//     // std::vector<float> c = {};
+//     // std::vector<float> d = {};
+//     // std::vector<float> e = {};
+//     // convert_vec_to_float(a, b, c);
+//     // printv(c);
+//     // normalize(c, d);
+//     // printv(d);
+//     // cumulative(d, e);
+//     // printv(e);
+//     // int index = find_index_less_or_equal(e, 0.05);
+//     // std::cout << index;
 
-    for (int i = 0; i <= 10; i++)
-    {
-        int n = 3;
-        printv(choice_n(n, a, p));
-        std::cout << '\n';
-    }
+//     for (int i = 0; i <= 10; i++)
+//     {
+//         int n = 3;
+//         printv(choice_n(n, a, p));
+//         std::cout << '\n';
+//     }
 
-    return 0;
-}
+//     return 0;
+// }
