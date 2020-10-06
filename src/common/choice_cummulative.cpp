@@ -14,6 +14,7 @@ void printv(std::vector<VT> v)
     std::cout << "\n";
 }
 
+// template <typename CV>
 void convert_vec_to_float(std::vector<int> colsample_bytree_weight, int colsample_bytree_weight_factor, std::vector<float> &output)
 {
 
@@ -24,6 +25,7 @@ void convert_vec_to_float(std::vector<int> colsample_bytree_weight, int colsampl
     }
 }
 
+// template <typename N>
 void normalize(std::vector<float> a, std::vector<float> &output)
 {
     float sum_of_elems = 0;
@@ -38,6 +40,7 @@ void normalize(std::vector<float> a, std::vector<float> &output)
     }
 }
 
+// template <typename CU>
 void cumulative(std::vector<float> a, std::vector<float> &output)
 {
     float running_total = 0;
@@ -48,6 +51,7 @@ void cumulative(std::vector<float> a, std::vector<float> &output)
     }
 }
 
+// template <typename FI>
 int find_index_less_or_equal(std::vector<float> a, float n)
 {
     int index = 0;
@@ -68,7 +72,7 @@ int find_index_less_or_equal(std::vector<float> a, float n)
 }
 
 template <typename TUU>
-int choice(std::vector<TUU> input, std::vector<float> p)
+int choice_c(std::vector<TUU> input, std::vector<float> p)
 {
     // std::cout << "\nChoice started\n";
 
@@ -102,8 +106,11 @@ int choice(std::vector<TUU> input, std::vector<float> p)
     return index;
 }
 
+// template <typename TUU>
+// std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<int> p)
+
 template <typename TUU>
-std::vector<TUU> choice_n(int n, std::vector<TUU> input, std::vector<int> p)
+std::vector<TUU> choice_n(std::vector<TUU> input, int n, bool replace, std::vector<int> p)
 {
     std::vector<float> pf = {};
     convert_vec_to_float(p, 1, pf);
@@ -112,7 +119,7 @@ std::vector<TUU> choice_n(int n, std::vector<TUU> input, std::vector<int> p)
     for (int i = 0; i < n; i++)
     {
 
-        int index = choice(input, pf);
+        int index = choice_c(input, pf);
         float item = input.at(index);
         output.push_back(item);
         input.erase(input.begin() + index);
@@ -145,7 +152,7 @@ std::vector<TUU> choice_n(int n, std::vector<TUU> input, std::vector<int> p)
 //     for (int i = 0; i <= 10; i++)
 //     {
 //         int n = 3;
-//         printv(choice_n(n, a, p));
+//         printv(choice_n(a, n, false, p));
 //         std::cout << '\n';
 //     }
 
