@@ -80,59 +80,59 @@ std::vector<TU> scale_up_int(std::vector<TU> a, std::vector<int> p)
     return ap;
 }
 
-// template <typename TUU>
-// std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<int> p)
-// {
-//     if (replace == true)
-//     {
-//         std::cout << "Not Implemented \n\n";
-//         return a;
-//     }
+template <typename TUU>
+std::vector<TUU> choice(std::vector<TUU> a, int size, bool replace, std::vector<int> p)
+{
+    if (replace == true)
+    {
+        std::cout << "Not Implemented \n\n";
+        return a;
+    }
 
-//     if (size >= a.size())
-//     {
-//         std::cout << "No need if choosing, subsample size is bigger or equal to sample \n\n";
-//         return a;
-//     }
+    if (size >= a.size())
+    {
+        std::cout << "No need if choosing, subsample size is bigger or equal to sample \n\n";
+        return a;
+    }
 
-//     if (p.size() != a.size())
-//     {
-//         std::cout << "p and a should have the same size \n\n";
-//         return a;
-//     }
+    if (p.size() != a.size())
+    {
+        std::cout << "p and a should have the same size \n\n";
+        return a;
+    }
 
-//     std::vector<TUU> ap;
-//     // ap = scale_up(a, p);
-//     ap = scale_up_int(a, p);
+    std::vector<TUU> ap;
+    // ap = scale_up(a, p);
+    ap = scale_up_int(a, p);
 
-//     std::vector<TUU>
-//         ap_out;
+    std::vector<TUU>
+        ap_out;
 
-//     for (int i = 0; i < size; i++)
-//     {
+    for (int i = 0; i < size; i++)
+    {
 
-//         std::vector<TUU> temp;
-//         temp.resize(ap.size());
-//         // std::experimental::sample(
-//         //     ap.begin(),
-//         //     ap.end(),
-//         //     std::back_inserter(temp),
-//         //     1,
-//         //     std::mt19937{std::random_device{}()});
+        std::vector<TUU> temp;
+        temp.resize(ap.size());
+        // std::experimental::sample(
+        //     ap.begin(),
+        //     ap.end(),
+        //     std::back_inserter(temp),
+        //     1,
+        //     std::mt19937{std::random_device{}()});
 
-//         temp = ap;
-//         std::random_device rd;
-//         std::mt19937 g(rd());
+        temp = ap;
+        std::random_device rd;
+        std::mt19937 g(rd());
 
-//         std::shuffle(temp.begin(),
-//                      temp.end(),
-//                      g);
+        std::shuffle(temp.begin(),
+                     temp.end(),
+                     g);
 
-//         ap_out.push_back(temp.at(0));
-//         remove(ap, temp.at(0));
-//     }
-//     return ap_out;
-// }
+        ap_out.push_back(temp.at(0));
+        remove(ap, temp.at(0));
+    }
+    return ap_out;
+}
 
 // int main()
 // {
