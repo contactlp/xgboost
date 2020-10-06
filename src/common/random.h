@@ -19,7 +19,8 @@
 
 #include "xgboost/host_device_vector.h"
 #include "io.h"
-#include "choice.cpp"
+// #include "choice.cpp"
+#include "choice_cummulative.cpp"
 
 namespace xgboost
 {
@@ -149,9 +150,11 @@ namespace xgboost
         // std::vector<int> p = colsample_bytree_weight_factor_;
 
         std::cout << "colsample_bytree_weight_ vector used: \n";
-        printv(colsample_bytree_weight_);
+        // printv(colsample_bytree_weight_);
 
-        const auto f = choice(features, n, false, colsample_bytree_weight_);
+        // const auto f = choice(features, n, false, colsample_bytree_weight_);
+        const auto f = choice_n(n, features, colsample_bytree_weight_);
+        std::cout << "choice_n\n";
 
         p_new_features->HostVector() = f;
         const auto &fr = p_new_features->HostVector();
@@ -208,7 +211,7 @@ namespace xgboost
         std::cout << colsample_bytree_weight_factor_;
         std::cout << "\n";
 
-        printv(colsample_bytree_weight_);
+        // printv(colsample_bytree_weight_);
 
         if (feature_set_tree_ == nullptr)
         {
