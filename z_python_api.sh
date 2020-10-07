@@ -1,5 +1,7 @@
 set -x
 echo "----------------------------------------------------------------------------------------------"
+
+BUILD_DIR=/home/lpatel/projects/repos/xgboost/build 
 #sudo yum install boost boost-thread boost-devel
 #conda create -n auto_weight python=3
 conda_env=auto_weight
@@ -10,8 +12,10 @@ export PATH=/opt/rh/devtoolset-8/root/usr/bin:$PATH
 date
 sudo chown -R lpatel ~/projects/repos/xgboost/
 
-#sudo rm -rf /home/lpatel/projects/repos/xgboost/build # clear cache
-cd /home/lpatel/projects/repos/xgboost/build
+mv /home/lpatel/projects/repos/xgboost/lib/libxgboost.so /tmp/ || true
+rm /home/lpatel/projects/repos/xgboost/src/common/choice_cummulative || true
+sudo rm -rf $BUILD_DIR && mkdir $BUILD_DIR # clear cache
+cd $BUILD_DIR
 cmake3 .. 
 # cmake .. 
 make -j 16 
