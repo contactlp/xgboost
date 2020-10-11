@@ -176,7 +176,7 @@ namespace xgboost
       template <typename TUU>
       int choice_c(std::vector<TUU> input, std::vector<float> p)
       {
-        std::cout << "\n--func choice_c \n";
+        std::cout << "\n --func choice_c started \n";
         // std::cout << "\nChoice started\n";
 
         if (input.size() != p.size())
@@ -205,7 +205,7 @@ namespace xgboost
         float selected;
         // selected = input.at(index);
 
-        // std::cout << "\nChoice ended\n";
+        std::cout << "\n --func choice_c ended \n";
         return index;
       }
 
@@ -241,6 +241,12 @@ namespace xgboost
         {
 
           int index = choice_c(input, pf);
+          std::cout << "choice_c index: " << index;
+          if (index >= input.size())
+          {
+            std::cout << "index is bigger than length of inpt vector";
+            index -= 1;
+          }
           float item = input.at(index);
           output.push_back(item);
           input.erase(input.begin() + index);

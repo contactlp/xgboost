@@ -15,7 +15,7 @@ sudo chown -R lpatel ~/projects/repos/xgboost/
 
 mv /home/lpatel/projects/repos/xgboost/lib/libxgboost.so /tmp/ || true
 rm /home/lpatel/projects/repos/xgboost/src/common/choice_cummulative || true
-sudo rm -rf $BUILD_DIR && mkdir $BUILD_DIR # clear cache
+#sudo rm -rf $BUILD_DIR && mkdir $BUILD_DIR # clear cache
 cd $BUILD_DIR
 cmake3 .. 
 # cmake .. 
