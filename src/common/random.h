@@ -96,7 +96,7 @@ namespace xgboost
       template <typename VT>
       void printv(std::vector<VT> v)
       {
-        std::cout << "\n--func printv \n";
+        // std::cout << "\n--func printv \n";
         for (int i = 0; i < v.size(); i++)
         {
           std::cout << v.at(i) << " ";
@@ -107,7 +107,7 @@ namespace xgboost
       // template <typename CV>
       void convert_vec_to_float(std::vector<int> colsample_bytree_weight, int colsample_bytree_weight_factor, std::vector<float> &output)
       {
-        std::cout << "\n--func convert_vec_to_float \n";
+        // std::cout << "\n--func convert_vec_to_float \n";
         for (int i = 0; i < colsample_bytree_weight.size(); i++)
         {
           float fi = static_cast<float>(colsample_bytree_weight.at(i)) / static_cast<float>(colsample_bytree_weight_factor);
@@ -118,7 +118,7 @@ namespace xgboost
       // template <typename N>
       void normalize(std::vector<float> a, std::vector<float> &output)
       {
-        std::cout << "\n--func normalize \n";
+        // std::cout << "\n--func normalize \n";
         float sum_of_elems = 0;
         sum_of_elems = std::accumulate(a.begin(), a.end(),
                                        decltype(a)::value_type(0));
@@ -134,26 +134,26 @@ namespace xgboost
       // template <typename CU>
       void cumulative(std::vector<float> a, std::vector<float> &output)
       {
-        std::cout << "\n--func cumulative \n";
+        // std::cout << "\n--func cumulative \n";
         float running_total = 0;
         for (int i = 0; i < a.size(); i++)
         {
           running_total += a.at(i);
           output.push_back(running_total);
         }
-        std::cout << "\n--func cumulative end \n";
+        // std::cout << "\n--func cumulative end \n";
       }
 
       // template <typename FI>
       float find_index_less_or_equal(std::vector<float> a, float n)
       {
-        std::cout << "\n--func find_index_less_or_equal \n";
-        std::cout << "\n n : " << n << "length of input:" << a.size() << "\n";
-        printv(a);
+        // std::cout << "\n--func find_index_less_or_equal \n";
+        // std::cout << "\n n : " << n << "length of input:" << a.size() << "\n";
+        // printv(a);
 
         if (n > 1)
         {
-          std::cout << "\n ------------------------------------ n is bigger than cummularive sum; ERROR ";
+          // std::cout << "\n ------------------------------------ n is bigger than cummularive sum; ERROR ";
           return a.size() - 1;
         }
         int i = 0;
@@ -163,25 +163,25 @@ namespace xgboost
           float item = a.at(i);
           if (n < item)
           {
-            std::cout << "\n n < item \n"
-                      << n << "<" << item << " ; i : " << i;
+            // std::cout << "\n n < item \n"
+            //          << n << "<" << item << " ; i : " << i;
             break;
           }
         }
-        std::cout << "\n n " << n << "; i" << i;
-        std::cout << "\n--func find_index_less_or_equal -- end \n";
+        // std::cout << "\n n " << n << "; i" << i;
+        // std::cout << "\n--func find_index_less_or_equal -- end \n";
         return i;
       }
 
       template <typename TUU>
       int choice_c(std::vector<TUU> input, std::vector<float> p)
       {
-        std::cout << "\n --func choice_c started \n";
-        // std::cout << "\nChoice started\n";
+        // std::cout << "\n --func choice_c started \n";
+        // // std::cout << "\nChoice started\n";
 
         if (input.size() != p.size())
         {
-          std::cout << "\ninput vector and probability vector size is not the same \n";
+          // std::cout << "\ninput vector and probability vector size is not the same \n";
           return -1.0;
         }
         int conversion = 1; // will be used to divide by 1.0
@@ -205,7 +205,7 @@ namespace xgboost
         float selected;
         // selected = input.at(index);
 
-        std::cout << "\n --func choice_c ended \n";
+        // std::cout << "\n --func choice_c ended \n";
         return index;
       }
 
@@ -215,36 +215,36 @@ namespace xgboost
       template <typename TUU>
       std::vector<TUU> choice_n(std::vector<TUU> input, int n, bool replace, std::vector<int> p)
       {
-        std::cout << "\n--func choice_n \n";
-        std::cout << "\n input size: " << input.size() << "  p size :" << p.size() << " --\n";
+        // std::cout << "\n--func choice_n \n";
+        // std::cout << "\n input size: " << input.size() << "  p size :" << p.size() << " --\n";
         std::vector<TUU> output;
 
         if (input.size() != p.size())
         {
-          std::cout << "\n------------------------------------------------------------------------------input and p value length is not the same --\n ";
-          std::cout << "\n input size: " << input.size() << "  p size :" << p.size() << " --\n";
+          // std::cout << "\n------------------------------------------------------------------------------input and p value length is not the same --\n ";
+          // std::cout << "\n input size: " << input.size() << "  p size :" << p.size() << " --\n";
           return output;
         }
 
         if (input.size() < n)
         {
-          std::cout << "\n------------------------------------------------------------------------------input size: " << input.size() << "  n size : " << n << "--\n";
+          // std::cout << "\n------------------------------------------------------------------------------input size: " << input.size() << "  n size : " << n << "--\n";
 
           return output;
         }
         std::vector<float> pf = {};
         convert_vec_to_float(p, 1, pf);
-        std::cout << "\n pf \n";
-        printv(pf);
+        // std::cout << "\n pf \n";
+        // printv(pf);
 
         for (int i = 0; i < n; i++)
         {
 
           int index = choice_c(input, pf);
-          std::cout << "choice_c index: " << index;
+          // std::cout << "choice_c index: " << index;
           if (index >= input.size())
           {
-            std::cout << "index is bigger than length of inpt vector";
+            // std::cout << "index is bigger than length of inpt vector";
             index -= 1;
           }
           float item = input.at(index);
@@ -290,13 +290,13 @@ namespace xgboost
         // weight2
         // std::vector<float> p{0.048, 0.024, 0.036000000000000004, 0.036000000000000004, 0.024, 0.06, 0.048, 0.012, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06, 0.06};
 
-        std::cout << "colsample_bytree_weight_ vector used: \n";
+        // std::cout << "colsample_bytree_weight_ vector used: \n";
         // printv(colsample_bytree_weight_);
 
         //const auto f = choice(features, n, false, colsample_bytree_weight_);
         const auto f = choice_n(features, n, false, colsample_bytree_weight_);
 
-        std::cout << "choice_n\n";
+        // std::cout << "choice_n\n";
 
         p_new_features->HostVector() = f;
         const auto &fr = p_new_features->HostVector();
@@ -349,9 +349,9 @@ namespace xgboost
 
         colsample_bytree_weight_ = colsample_bytree_weight;
 
-        std::cout << "\n colsample_bytree_weight_: \n";
-        std::cout << colsample_bytree_weight_factor_;
-        std::cout << "\n";
+        // std::cout << "\n colsample_bytree_weight_: \n";
+        // std::cout << colsample_bytree_weight_factor_;
+        // std::cout << "\n";
 
         // printv(colsample_bytree_weight_);
 
