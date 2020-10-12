@@ -36,7 +36,7 @@ import pprint
 def find_float_signfigance(float_lst, float_signfigance):
 
     mi = min(float_lst)
-    print(mi)
+    # print(mi)
     mi = str(mi)
     mi = mi.replace('0.', '')
 
@@ -48,7 +48,7 @@ def find_float_signfigance(float_lst, float_signfigance):
             else:
                 break
     else:
-        print("e in float")
+        # print("e in float")
         mi, leading_zeros = mi.split('e-')
         leading_zeros = int(leading_zeros)
         leading_zeros -= 1
@@ -145,7 +145,7 @@ def normalize_dict_values(d):
     for i in d:
         output[i] = d[i]/total
 
-    print("normalize_dict_values : %s" % (output))
+    # print("normalize_dict_values : %s" % (output))
 
     return output
 
@@ -169,7 +169,7 @@ def divide_views_weight_by_number_of_features(d):
         elif round(view) == round(0.003225):
             output2[view] = d[view]/406  # 186
         else:
-            print("\n \n issue in divide_views_weight_by_number_of_features \n \n")
+            # print("\n \n issue in divide_views_weight_by_number_of_features \n \n")
             break
     # TODO: automate this part
 
@@ -264,10 +264,10 @@ def weighted_resampling_params(colsample_bytree_weight_lst, max_depth,
         colsample_bytree_weight, float_signfigance)
 
     # print('\n colsample_bytree_weight', colsample_bytree_weight)
-    print('\n colsample_bytree_weight', "min:", min(
-        colsample_bytree_weight), ";  max :", max(colsample_bytree_weight), colsample_bytree_weight)
-    print('\n sendable_colsample_bytree_weight', "min:", min(
-        sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight), sendable_colsample_bytree_weight)
+    # print('\n colsample_bytree_weight', "min:", min(
+    #     colsample_bytree_weight), ";  max :", max(colsample_bytree_weight), colsample_bytree_weight)
+    # print('\n sendable_colsample_bytree_weight', "min:", min(
+    #     sendable_colsample_bytree_weight), ";  max :", max(sendable_colsample_bytree_weight), sendable_colsample_bytree_weight)
 
     params = {
         'booster': 'gbtree',
@@ -307,22 +307,22 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback,
             params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1,
             callbacks=[MyCallback()], xgb_model=xgb_model
         )
-        print('gain : %s' % (gain))
+        # print('gain : %s' % (gain))
         new_view_weight = find_new_view_importance(gain, current_w)
-        print('new_view_weight: %s' % (new_view_weight))
+        # print('new_view_weight: %s' % (new_view_weight))
         new_view_weight_normalized = normalized_and_divide_views_weight_by_number_of_features(
             new_view_weight)
-        print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
+        # print('new_view_weight_normalized: %s' % (new_view_weight_normalized))
 
         next_w = w[current_w].copy()
         for view in new_view_weight_normalized:
             next_w = [new_view_weight_normalized[view]
                       if w == view else w for w in next_w]
 
-        print("\n current_w first 10 : %s ; sum : %s \n " %
-              (w[current_w][:10], sum(w[current_w])))
-        print("\n next_w first 10 : %s    ; sum : %s :   len : %s \n" %
-              (next_w[:10], sum(next_w), len(next_w)))
+        # print("\n current_w first 10 : %s ; sum : %s \n " %
+        #       (w[current_w][:10], sum(w[current_w])))
+        # print("\n next_w first 10 : %s    ; sum : %s :   len : %s \n" %
+        #       (next_w[:10], sum(next_w), len(next_w)))
 
         params = weighted_resampling_params(
             next_w,
@@ -343,8 +343,8 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback,
         if max(auc_score_list[-early_stopping_n:]) < early_stopping_at * max(auc_score_list):
             break
 
-    print("model.get_score_gain : ", model.get_score(importance_type='gain'))
-    print("model.get_fscore     : ", model.get_fscore())
+    # print("model.get_score_gain : ", model.get_score(importance_type='gain'))
+    # print("model.get_fscore     : ", model.get_fscore())
 
     return model, i
 
