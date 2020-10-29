@@ -86,7 +86,7 @@ def fmap(trees):
     return fmap
 
 
-def find_view_weights(w_list):
+def find_view_weights(w_list,X_train):
 
     view_weight = {}
     features_per_view = {}
@@ -102,10 +102,10 @@ def find_view_weights(w_list):
     return (features_per_view, view_weight)
 
 
-def find_new_view_importance(last_round_feature_weight, current_w):
+def find_new_view_importance(last_round_feature_weight, current_w,X_train):
 
     # how many view are there ?
-    features_per_view, feature_weight = find_view_weights(w[current_w])
+    features_per_view, feature_weight = find_view_weights(w[current_w],X_train)
     unused_views = set(features_per_view)
 
     # find view which has not been used
@@ -198,9 +198,11 @@ def MyCallback():
 
 
 def read_csvs(data_dir, nrows=None):
+    weight_csv = os.path.join(data_dir, 'weight_csv.csv')
     train_csv = os.path.join(data_dir, 'train_csv.csv')
     test_csv = os.path.join(data_dir, 'test_csv.csv')
-    weight_csv = os.path.join(data_dir, 'weight_csv.csv')
+
+
 
     if nrows == None:
         train = pd.read_csv(train_csv)
@@ -213,7 +215,10 @@ def read_csvs(data_dir, nrows=None):
     print("train shape:%s , test shape: %s , weight shape: %s" %
           (train.shape, test.shape, weight.shape))
     # column names are formted inconsitantly
-    weight['col_fmt'] = weight.col.str.replace('-', '.').str.replace(':', '.')
+    try:
+        weight['col_fmt'] = weight.col.str.replace('-', '.').str.replace(':', '.')
+    except Exception as e:
+        print(e)
 
     return (train, test, weight)
 
@@ -289,7 +294,7 @@ def weighted_resampling_params(colsample_bytree_weight_lst, max_depth,
 
 
 def model_iterate(iteration, params, dtrain, dtest, MyCallback,
-                  max_depth, min_child_weight, eta, subsample, colsample_bytree
+                  max_depth, min_child_weight, eta, subsample, colsample_bytree,X_train
                   ):
     auc_score_list = []
     xgb_model = None
@@ -308,7 +313,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback,
             callbacks=[MyCallback()], xgb_model=xgb_model
         )
         # print('gain : %s' % (gain))
-        new_view_weight = find_new_view_importance(gain, current_w)
+        new_view_weight = find_new_view_importance(gain, current_w,X_train)
         # print('new_view_weight: %s' % (new_view_weight))
         new_view_weight_normalized = normalized_and_divide_views_weight_by_number_of_features(
             new_view_weight)
@@ -351,7 +356,9 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback,
 
 def XGB_CV(max_depth,
            # n_estimators,
-           colsample_bytree, subsample, min_child_weight, eta):
+           colsample_bytree, subsample, min_child_weight, eta
+           #, X_train
+          ):
 
     global AUC_LIST
     global LOG_LOSS_LIST
@@ -366,7 +373,7 @@ def XGB_CV(max_depth,
 
     model, i = model_iterate(model_iteration, params, dtrain, dtest,
                              MyCallback, max_depth,
-                             min_child_weight, eta, subsample, colsample_bytree)
+                             min_child_weight, eta, subsample, colsample_bytree ,X_train)
 
     score = model.predict(dtest)
     auc_score = roc_auc_score(y_test, score)
@@ -390,19 +397,25 @@ def XGB_CV(max_depth,
 
 # +
 max_depth, min_child_weight, eta, subsample, colsample_bytree = 10, 10, 0.01, 0.8, 0.5
-nrows = None  # 100000     # None will load all the data
+nrows = 100000 #None  # 100000     # None will load all the data
 float_signfigance = 2      # use at least 2 , larger int, better accuracy
-model_iteration = 500      # ideal 500
+model_iteration = 2 #500      # ideal 500
 early_stopping_n = 20      # larger int, better accuracy
 early_stopping_at = 0.9998  # larger float(ideal 0.9998), better accuracy
-data_dir = '/home/lpatel/projects/AKI/data_592v'
+
 
 
 pp = pprint.PrettyPrinter()
 gain = None
 print("xgb.__version__ : ", xgb.__version__)
 
+# -
 
+
+###################################################################################
+## data_592v
+###################################################################################
+data_dir = '/home/lpatel/projects/AKI/data_592v'
 train, test, weight = read_csvs(data_dir, nrows=nrows)
 X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
     train, test, weight)
@@ -414,9 +427,43 @@ w = {
     # 'w4': w4,
     # 'w5': w5
 }
-
+w
 
 # +
+# ####################################################################################
+# ### all data (6182_comment_21)
+# ####################################################################################
+# data_dir = '/home/lpatel/aki/inputs_6182_comment_21'
+
+# dtrain_path  = os.path.join(data_dir,'stg2up_2d_full_train_svmlite.txt')
+# dtest_path = os.path.join(data_dir,'stg2up_2d_full_test_svmlite.txt')
+# weight_path = os.path.join(data_dir,'weight_csv.csv')
+# col_path = os.path.join(data_dir,'stg2up_2d_full_auxCol_svmlite.csv')
+
+# weight = pd.read_csv(weight_path)
+# w1 = weight.wt1.tolist()
+# w2 = weight.wt2.tolist()
+# w3 = weight.wt3.tolist()
+
+# w = {
+#     'w1': w1,
+#     'w2': w2,
+#     'w3': w3,
+#     # 'w4': w4,
+#     # 'w5': w5
+# }
+
+# dtrain = xgb.DMatrix(dtrain_path)
+# dtest = xgb.DMatrix(dtest_path)
+# X_train = pd.read_csv(col_path) #X_train cols
+
+
+# # from sklearn.datasets import load_svmlight_file
+# # train_data = load_svmlight_file(dtrain_path,zero_based=False)
+# # X_train = train_data[0].toarray()
+# # y_train = train_data[1]
+# -
+
 for current_w in w:
 
     # current_w = 'w5'
@@ -429,7 +476,7 @@ for current_w in w:
     )
     model, _ = model_iterate(model_iteration, params, dtrain, dtest, MyCallback,
                              max_depth, min_child_weight, eta,
-                             subsample, colsample_bytree
+                             subsample, colsample_bytree, X_train
                              )
 
     t = datetime.datetime.now().strftime('%Y-%m-%d--%H-%M-%S')
@@ -439,14 +486,18 @@ for current_w in w:
 
     score = model.predict(dtest)
     auc = roc_auc_score(y_test, score)
-#    break
+    #break
 
     AUC_LIST = []
     LOG_LOSS_LIST = []
     ITERbest_LIST = []
     PARAM_LIST = []
 
-    dtrain = xgb.DMatrix(X_train, label=y_train)
+    #dtrain = xgb.DMatrix(X_train, label=y_train)
+    #before making changes : min(LOG_LOSS_LIST): 0.3015150713676214  ; max(AUC_LIST) : 0.5794087861305971
+    #After making changes : min(LOG_LOSS_LIST): 0.3015216667348146  ; max(AUC_LIST) : 0.5716324485697313
+    #after making changes: min(LOG_LOSS_LIST): 0.30152141156852247  ; max(AUC_LIST) : 0.5794901731598273
+    # after making changes: min(LOG_LOSS_LIST): 0.3015126913970709  ; max(AUC_LIST) : 0.5794369585637922
 
     XGB_BO = BayesianOptimization(XGB_CV, {
         'max_depth': (4, 10),
@@ -454,7 +505,8 @@ for current_w in w:
         'colsample_bytree': (0.5, 0.9),
         'subsample': (0.5, 0.8),
         'min_child_weight': (1, 10),
-        'eta': (0.05, 0.3)
+        'eta': (0.05, 0.3),
+        #'X_train':X_train
     })
 
     # +
@@ -482,4 +534,5 @@ for current_w in w:
           (min(LOG_LOSS_LIST), max(AUC_LIST)))
     # break
 
-# started at wed Sep 16 1:50 PM
+    # started at wed Sep 16 1:50 PM
+
