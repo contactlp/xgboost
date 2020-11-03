@@ -1,5 +1,9 @@
 set -x
 echo "start ----------------------------------------------------------------------------------------------"
+sudo chown -R jenkins.lnx-mi-users /opt/anaconda3
+sudo chmod -R ug+rwX /opt/anaconda3
+sudo chmod -R o+rX /opt/anaconda3
+
 ls -rt /home/lpatel/aki/results/cv* |tail -10 && ps -ef|grep python_api
 
 BUILD_DIR=/home/lpatel/projects/repos/xgboost/build 
@@ -29,7 +33,7 @@ cd /home/lpatel/projects/repos/xgboost/python-package
 pip uninstall -y xgboost || true
 sudo $env/pip uninstall -y xgboost   || true
 $env/python3 setup.py install #--no-cache-dir
-#$env/pip freeze > requiremnets.txt
+$env/pip freeze > requiremnets.txt
 $env/pip install -r requiremnets.txt
 
 #/usr/bin/python3 /home/lpatel/projects/repos/xgboost/z_xgboost_example.py
