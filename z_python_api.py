@@ -312,7 +312,7 @@ def model_iterate(iteration, params, dtrain, dtest, MyCallback,
             params=params, dtrain=dtrain, evals=[(dtrain, 'train'), (dtest, 'test')], num_boost_round=1,
             callbacks=[MyCallback()], xgb_model=xgb_model
         )
-        # print('gain : %s' % (gain))
+        print('gain : %s' % (gain))
         new_view_weight = find_new_view_importance(gain, current_w,X_train)
         # print('new_view_weight: %s' % (new_view_weight))
         new_view_weight_normalized = normalized_and_divide_views_weight_by_number_of_features(
@@ -409,60 +409,64 @@ pp = pprint.PrettyPrinter()
 gain = None
 print("xgb.__version__ : ", xgb.__version__)
 
-# -
 
-
-###################################################################################
-## data_592v
-###################################################################################
-data_dir = '/home/lpatel/projects/AKI/data_592v'
-train, test, weight = read_csvs(data_dir, nrows=nrows)
-X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
-    train, test, weight)
-w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
-w = {
-    'w1': w1,
-    'w2': w2,
-    # 'w3': w3,
-    # 'w4': w4,
-    # 'w5': w5
-}
-w
 
 # +
-# ####################################################################################
-# ### all data (6182_comment_21)
-# ####################################################################################
-# data_dir = '/home/lpatel/aki/inputs_6182_comment_21'
-
-# dtrain_path  = os.path.join(data_dir,'stg2up_2d_full_train_svmlite.txt')
-# dtest_path = os.path.join(data_dir,'stg2up_2d_full_test_svmlite.txt')
-# weight_path = os.path.join(data_dir,'weight_csv.csv')
-# col_path = os.path.join(data_dir,'stg2up_2d_full_auxCol_svmlite.csv')
-
-# weight = pd.read_csv(weight_path)
-# w1 = weight.wt1.tolist()
-# w2 = weight.wt2.tolist()
-# w3 = weight.wt3.tolist()
-
+# ###################################################################################
+# ## data_592v
+# ###################################################################################
+# data_dir = '/home/lpatel/projects/AKI/data_592v'
+# train, test, weight = read_csvs(data_dir, nrows=nrows)
+# X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
+#     train, test, weight)
+# w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
 # w = {
 #     'w1': w1,
 #     'w2': w2,
-#     'w3': w3,
+#     # 'w3': w3,
 #     # 'w4': w4,
 #     # 'w5': w5
 # }
+# w
 
-# dtrain = xgb.DMatrix(dtrain_path)
-# dtest = xgb.DMatrix(dtest_path)
-# X_train = pd.read_csv(col_path) #X_train cols
+# +
+####################################################################################
+### all data (6182_comment_21)
+####################################################################################
+data_dir = '/home/lpatel/aki/inputs_6182_comment_21/preproc'
+
+dtrain_path  = os.path.join(data_dir,'stg2up_2d_full_train_svmlite.txt')
+dtest_path = os.path.join(data_dir,'stg2up_2d_full_test_svmlite.txt')
+weight_path = os.path.join(data_dir,'weight_csv.csv')
+col_path = os.path.join(data_dir,'stg2up_2d_full_auxCol_svmlite.csv')
+
+weight = pd.read_csv(weight_path)
+w1 = weight.wt1.tolist()
+w2 = weight.wt2.tolist()
+w3 = weight.wt3.tolist()
+
+w = {
+    'w1': w1,
+    'w2': w2,
+    'w3': w3,
+    # 'w4': w4,
+    # 'w5': w5
+}
+
+dtrain = xgb.DMatrix(dtrain_path)
+dtest = xgb.DMatrix(dtest_path)
+X_train = pd.read_csv(col_path) #X_train cols
 
 
-# # from sklearn.datasets import load_svmlight_file
-# # train_data = load_svmlight_file(dtrain_path,zero_based=False)
-# # X_train = train_data[0].toarray()
-# # y_train = train_data[1]
+# from sklearn.datasets import load_svmlight_file
+# train_data = load_svmlight_file(dtrain_path,zero_based=False)
+# X_train = train_data[0].toarray()
+# y_train = train_data[1]
 # -
+
+import rpy2.robjects as robjects
+test = robjects.r['load']("/home/lpatel/aki/inputs_6182_comment_21/preproc/stg2up_2d_full_test.rda")
+
 
 for current_w in w:
 
