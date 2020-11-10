@@ -464,10 +464,6 @@ X_train = pd.read_csv(col_path) #X_train cols
 # y_train = train_data[1]
 # -
 
-import rpy2.robjects as robjects
-test = robjects.r['load']("/home/lpatel/aki/inputs_6182_comment_21/preproc/stg2up_2d_full_test.rda")
-
-
 for current_w in w:
 
     # current_w = 'w5'
@@ -539,4 +535,21 @@ for current_w in w:
     # break
 
     # started at wed Sep 16 1:50 PM
+
+
+# +
+trainX_path = os.path.join(data_dir,'stg2up_2d_full_trainX.csv')
+trainy_path = os.path.join(data_dir,'stg2up_2d_full_trainy.csv')
+testX_path  = os.path.join(data_dir,'stg2up_2d_full_testX.csv')
+testy_path  = os.path.join(data_dir,'stg2up_2d_full_testy.csv')
+
+trainX = pd.read_csv(trainX_path)
+trainy = pd.read_csv(trainy_path)
+testX  = pd.read_csv( testX_path)
+testy  = pd.read_csv( testy_path)
+# -
+
+
+trainX
+
 

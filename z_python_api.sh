@@ -1,8 +1,9 @@
 set -x
 echo "start ----------------------------------------------------------------------------------------------"
-sudo chown -R jenkins.lnx-mi-users /opt/anaconda3
-sudo chmod -R ug+rwX /opt/anaconda3
-sudo chmod -R o+rX /opt/anaconda3
+#sudo chown -R jenkins.lnx-mi-users /opt/anaconda3
+#sudo chmod -R ug+rwX /opt/anaconda3
+#sudo chmod -R o+rX /opt/anaconda3
+#sudo rsync -rv  /home/xsong/AKI/AKI_MultiView/data/preproc preproc/ && sudo chown -R lpatel /home/lpatel/aki/
 
 ls -rt /home/lpatel/aki/results/cv* |tail -10 && ps -ef|grep python_api
 
