@@ -538,6 +538,8 @@ for current_w in w:
 
 
 # +
+# from *_y use only col y
+
 trainX_path = os.path.join(data_dir,'stg2up_2d_full_trainX.csv')
 trainy_path = os.path.join(data_dir,'stg2up_2d_full_trainy.csv')
 testX_path  = os.path.join(data_dir,'stg2up_2d_full_testX.csv')
@@ -547,9 +549,57 @@ trainX = pd.read_csv(trainX_path)
 trainy = pd.read_csv(trainy_path)
 testX  = pd.read_csv( testX_path)
 testy  = pd.read_csv( testy_path)
+
+
+# +
+# use this https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.transpose.html instead of transpose
+#trainX.transpose()
 # -
 
+print(trainX.shape)
+print(trainy.shape)
 
-trainX
+#rowid = encounterid_abs(dsa)
+trainX.head()
+
+trainy.head()
+
+'''
+rowid = id
+variable =key
+val = value 
+-----------
+long_to_sparse_matrix<-function(df,id,variable,val,binary=FALSE){
+  if(binary){
+    x_sparse<-with(df,
+                   sparseMatrix(i=as.numeric(as.factor(get(id))),
+                                j=as.numeric(as.factor(get(variable))),
+                                x=1,
+                                dimnames=list(levels(as.factor(get(id))),
+                                              levels(as.factor(get(variable))))))
+  }else{
+    x_sparse<-with(df,
+                   sparseMatrix(i=as.numeric(as.factor(get(id))),
+                                j=as.numeric(as.factor(get(variable))),
+                                x=ifelse(is.na(get(val)),1,as.numeric(get(val))),
+                                dimnames=list(levels(as.factor(get(id))),
+                                              levels(as.factor(get(variable))))))
+  }
+  
+  return(x_sparse)
+}
+
+'''
+
+# +
+# https://github.com/kumc-bmi/AKI_CDM/blob/master/R/DSGBT_BayesOpt.R#L122
+# -
+
+'''
+1. transpose test and train with efficient method 
+2. make sure columns are in the same order
+3. if column does not exist in testing, then add empty col with null value
+4. other way arround issue, drop those cols
+'''
 
 
