@@ -31,6 +31,7 @@ from sklearn.model_selection import GridSearchCV
 from bayes_opt import BayesianOptimization
 import warnings
 import pprint
+import scipy
 
 
 def find_float_signfigance(float_lst, float_signfigance):
@@ -412,57 +413,86 @@ print("xgb.__version__ : ", xgb.__version__)
 
 
 # +
-# ###################################################################################
-# ## data_592v
-# ###################################################################################
-# data_dir = '/home/lpatel/projects/AKI/data_592v'
-# train, test, weight = read_csvs(data_dir, nrows=nrows)
-# X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
-#     train, test, weight)
-# w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
-# w = {
-#     'w1': w1,
-#     'w2': w2,
-#     # 'w3': w3,
-#     # 'w4': w4,
-#     # 'w5': w5
-# }
-# w
+###################################################################################
+## data_592v
+###################################################################################
+#data_dir = '/home/lpatel/projects/AKI/data_592v'
+'''
+(auto_weight) [lpatel@paddlefish read_csvs_6182_comment_35]$ mv ../stg2up_2d_full_test.txt  test_csv.csv
+(auto_weight) [lpatel@paddlefish read_csvs_6182_comment_35]$ mv ../stg2up_2d_full_train.txt train_csv.csv
+(auto_weight) [lpatel@paddlefish read_csvs_6182_comment_35]$ cp ../weight_csv.csv .
+'''
 
-# +
-####################################################################################
-### all data (6182_comment_21)
-####################################################################################
-data_dir = '/home/lpatel/aki/inputs_6182_comment_21/preproc'
-
-dtrain_path  = os.path.join(data_dir,'stg2up_2d_full_train_svmlite.txt')
-dtest_path = os.path.join(data_dir,'stg2up_2d_full_test_svmlite.txt')
-weight_path = os.path.join(data_dir,'weight_csv.csv')
-col_path = os.path.join(data_dir,'stg2up_2d_full_auxCol_svmlite.csv')
-
-weight = pd.read_csv(weight_path)
-w1 = weight.wt1.tolist()
-w2 = weight.wt2.tolist()
-w3 = weight.wt3.tolist()
-
+data_dir = '/home/lpatel/aki/inputs_6182_comment_21/preproc/read_csvs_6182_comment_35'
+train, test, weight = read_csvs(data_dir, nrows=nrows)
+X_train, X_test, dtrain, dtest, y_train,  y_test = convert_to_dmatix(
+    train, test, weight)
+w1, w2, w3, w4, w5 = find_all_weight(weight, X_train)
 w = {
     'w1': w1,
     'w2': w2,
-    'w3': w3,
+    # 'w3': w3,
     # 'w4': w4,
     # 'w5': w5
 }
-
-dtrain = xgb.DMatrix(dtrain_path)
-dtest = xgb.DMatrix(dtest_path)
-X_train = pd.read_csv(col_path) #X_train cols
-
-
-# from sklearn.datasets import load_svmlight_file
-# train_data = load_svmlight_file(dtrain_path,zero_based=False)
-# X_train = train_data[0].toarray()
-# y_train = train_data[1]
+w
 # -
+
+test = scipy.io.mmread('/home/lpatel/aki/inputs_6182_comment_21/preproc/read_csvs_6182_comment_35/test_csv.csv')
+
+test
+
+test_df = pd.DataFrame.sparse.from_spmatrix(test,)
+
+test_df.isnull().any().any()
+
+xgb.DMatrix(test)
+
+print(test.getcol(-1).mean())
+print(test.getcol(-2).mean())
+print(np.unique(test.getcol(-2).data))
+print(np.unique(test.getcol(-1).data))
+
+
+
+
+
+# +
+# ####################################################################################
+# ### all data (6182_comment_21)
+# ####################################################################################
+# data_dir = '/home/lpatel/aki/inputs_6182_comment_21/preproc'
+
+# dtrain_path  = os.path.join(data_dir,'stg2up_2d_full_train.txt')
+# dtest_path = os.path.join(data_dir,'stg2up_2d_full_test.txt')
+# weight_path = os.path.join(data_dir,'weight_csv.csv')
+# col_path = os.path.join(data_dir,'stg2up_2d_full_auxCol_svmlite.csv')
+
+# weight = pd.read_csv(weight_path)
+# w1 = weight.wt1.tolist()
+# w2 = weight.wt2.tolist()
+# w3 = weight.wt3.tolist()
+
+# w = {
+#     'w1': w1,
+#     'w2': w2,
+#     'w3': w3,
+#     # 'w4': w4,
+#     # 'w5': w5
+# }
+
+# dtrain = xgb.DMatrix(dtrain_path)
+# dtest = xgb.DMatrix(dtest_path)
+# X_train = pd.read_csv(col_path) #X_train cols
+
+
+# # from sklearn.datasets import load_svmlight_file
+# # train_data = load_svmlight_file(dtrain_path,zero_based=False)
+# # X_train = train_data[0].toarray()
+# # y_train = train_data[1]
+# -
+
+
 
 for current_w in w:
 
@@ -550,17 +580,17 @@ trainy = pd.read_csv(trainy_path)
 testX  = pd.read_csv( testX_path)
 testy  = pd.read_csv( testy_path)
 
-
-# +
 # use this https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.csr_matrix.transpose.html instead of transpose
 #trainX.transpose()
-# -
 
 print(trainX.shape)
 print(trainy.shape)
+# -
 
-#rowid = encounterid_abs(dsa)
-trainX.head()
+
+trainXT = trainX.transpose()
+
+trainXT
 
 trainy.head()
 
@@ -601,5 +631,73 @@ long_to_sparse_matrix<-function(df,id,variable,val,binary=FALSE){
 3. if column does not exist in testing, then add empty col with null value
 4. other way arround issue, drop those cols
 '''
+
+import pandas as pd
+from scipy.sparse import csr_matrix
+from pandas.api.types import CategoricalDtype
+
+# +
+trainX_path = os.path.join(data_dir,'stg2up_2d_full_trainX.csv')
+trainy_path = os.path.join(data_dir,'stg2up_2d_full_trainy.csv')
+testX_path  = os.path.join(data_dir,'stg2up_2d_full_testX.csv')
+testy_path  = os.path.join(data_dir,'stg2up_2d_full_testy.csv')
+
+tr_long = pd.read_csv(trainX_path)
+tr_y = pd.read_csv(trainy_path)
+ts_long = pd.read_csv(testX_path)
+ts_y = pd.read_csv(testy_path)
+
+# +
+
+
+#dat_wide = dat_long.pivot('ROW_ID','key') #duplicates exist
+
+#take the latest value for each (ROW_ID,key)
+tr_long = tr_long.loc[tr_long.groupby(['ROW_ID','key'])['dsa'].idxmin()]
+del tr_long['dsa']
+
+#instead of using pivot, we will convert dat_long into sparse Matrix
+ROW_ID_c = CategoricalDtype(sorted(tr_long.ROW_ID.unique()), ordered=True)
+key_c = CategoricalDtype(sorted(tr_long.key.unique()), ordered=True)
+
+row = tr_long.ROW_ID.astype(ROW_ID_c).cat.codes
+col = tr_long.key.astype(key_c).cat.codes
+sparse_mt_tr = csr_matrix((tr_long["value"], (row, col)), \
+                           shape=(ROW_ID_c.categories.size, key_c.categories.size))
+
+#print out sparse matrix dimension
+sparse_mt_tr
+
+#sort tr_y by ROW_ID in sparse_mt_tr
+#ref: https://stackoverflow.com/questions/23482668/sorting-by-a-custom-list-in-pandas
+tr_y = tr_y[ROW_ID_c,'y']
+
+
+
+# +
+
+
+#take the latest value for each (ROW_ID,key)
+ts_long = ts_long.loc[dat_long.groupby(['ROW_ID','key'])['dsa'].idxmin()]
+
+#instead of using pivot, we will convert ts_long into sparse Matrix
+ROW_ID_c = CategoricalDtype(sorted(ts_long.ROW_ID.unique()), ordered=True)
+
+row = ts_long.ROW_ID.astype(ROW_ID_c).cat.codes
+col = ts_long.key.astype(key_c).cat.codes
+sparse_mt_ts = csr_matrix((ts_long["value"], (row, col)), \
+                           shape=(ROW_ID_c.categories.size, key_c.categories.size))
+
+#print out sparse matrix dimension
+sparse_mt_ts
+
+#sort ts_y by ROW_ID in sparse_mt_ts
+ts_y = ts_y[ROW_ID_c,'y']
+
+
+# -
+
+# As suggested by https://stackoverflow.com/questions/40817459/xgboost-and-sparse-matrix, sparse_mt_tr and tr_y can be directly used in xgboost model.
+
 
 
