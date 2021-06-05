@@ -101,3 +101,9 @@ R-package/src/Makevars
 .idea
 *.iml
 /cmake-build-debug/
+
+# added by Lav
+venv
+.ipynb_checkpoints
+*.ipynb
+nohup*.out

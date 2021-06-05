@@ -12,7 +12,7 @@
 #include <limits>
 #include <sstream>
 #include <string>
-#include <ios>
+#include <stack>
 #include <utility>
 #include <vector>
 
@@ -215,7 +215,6 @@ class LearnerImpl : public Learner {
       tparam_.dsplit = DataSplitMode::kRow;
     }
 
-
     // set seed only before the model is initialized
     common::GlobalRandom().seed(generic_parameters_.seed);
     // must precede configure gbm since num_features is required for gbm
@@ -231,7 +230,81 @@ class LearnerImpl : public Learner {
                                              obj_->ProbToMargin(mparam_.base_score));
 
     this->need_configuration_ = false;
+    if (generic_parameters_.validate_parameters) {
+      this->ValidateParameters();
+    }
+
+    // FIXME(trivialfis): Clear the cache once binary IO is gone.
     monitor_.Stop("Configure");
+  }
+
+  void ValidateParameters() {
+    Json config { Object() };
+    this->SaveConfig(&config);
+    std::stack<Json> stack;
+    stack.push(config);
+    std::string const postfix{"_param"};
+
+    auto is_parameter = [&postfix](std::string const &key) {
+      return key.size() > postfix.size() &&
+             std::equal(postfix.rbegin(), postfix.rend(), key.rbegin());
+    };
+
+    // Extract all parameters
+    std::vector<std::string> keys;
+    while (!stack.empty()) {
+      auto j_obj = stack.top();
+      stack.pop();
+      auto const &obj = get<Object const>(j_obj);
+
+      for (auto const &kv : obj) {
+        if (is_parameter(kv.first)) {
+          auto parameter = get<Object const>(kv.second);
+          std::transform(parameter.begin(), parameter.end(), std::back_inserter(keys),
+                         [](std::pair<std::string const&, Json const&> const& kv) {
+                           return kv.first;
+                         });
+        } else if (IsA<Object>(kv.second)) {
+          stack.push(kv.second);
+        }
+      }
+    }
+    auto learner_model_param = mparam_.ToJson();
+    for (auto const& kv : get<Object>(learner_model_param)) {
+      keys.emplace_back(kv.first);
+    }
+    keys.emplace_back(kEvalMetric);
+    keys.emplace_back("verbosity");
+    keys.emplace_back("num_output_group");
+
+    std::sort(keys.begin(), keys.end());
+
+    std::vector<std::string> provided;
+    for (auto const &kv : cfg_) {
+      // FIXME(trivialfis): Make eval_metric a training parameter.
+      provided.push_back(kv.first);
+    }
+    std::sort(provided.begin(), provided.end());
+
+    std::vector<std::string> diff;
+    std::set_difference(provided.begin(), provided.end(), keys.begin(),
+                        keys.end(), std::back_inserter(diff));
+    if (diff.size() != 0) {
+      std::stringstream ss;
+      ss << "\nParameters: { ";
+      for (size_t i = 0; i < diff.size() - 1; ++i) {
+        ss << diff[i] << ", ";
+      }
+      ss << diff.back();
+      ss << R"W( } might not be used.
+
+  This may not be accurate due to some parameters are only used in language bindings but
+  passed down to XGBoost core.  Or some parameters are not used but slip through this
+  verification. Please open an issue if you find above cases.
+
+)W";
+      LOG(WARNING) << ss.str();
+    }
   }
 
   void CheckDataSplitMode() {
@@ -337,6 +410,8 @@ class LearnerImpl : public Learner {
     }
 
     fromJson(learner_parameters.at("generic_param"), &generic_parameters_);
+    // make sure the GPU ID is valid in new environment before start running configure.
+    generic_parameters_.ConfigureGpuId(false);
 
     this->need_configuration_ = true;
   }
@@ -619,7 +694,7 @@ class LearnerImpl : public Learner {
     this->ValidateDMatrix(train);
 
     monitor_.Start("PredictRaw");
-    this->PredictRaw(train, &preds_[train]);
+    this->PredictRaw(train, &preds_[train], true);
     monitor_.Stop("PredictRaw");
     TrainingObserver::Instance().Observe(preds_[train], "Predictions");
 
@@ -660,7 +735,7 @@ class LearnerImpl : public Learner {
     for (size_t i = 0; i < data_sets.size(); ++i) {
       DMatrix * dmat = data_sets[i];
       this->ValidateDMatrix(dmat);
-      this->PredictRaw(data_sets[i], &preds_[dmat]);
+      this->PredictRaw(data_sets[i], &preds_[dmat], false);
       obj_->EvalTransform(&preds_[dmat]);
       for (auto& ev : metrics_) {
         os << '\t' << data_names[i] << '-' << ev->Name() << ':'
@@ -724,6 +799,7 @@ class LearnerImpl : public Learner {
 
   void Predict(DMatrix* data, bool output_margin,
                HostDeviceVector<bst_float>* out_preds, unsigned ntree_limit,
+               bool training,
                bool pred_leaf, bool pred_contribs, bool approx_contribs,
                bool pred_interactions) override {
     int multiple_predictions = static_cast<int>(pred_leaf) +
@@ -739,7 +815,7 @@ class LearnerImpl : public Learner {
     } else if (pred_leaf) {
       gbm_->PredictLeaf(data, &out_preds->HostVector(), ntree_limit);
     } else {
-      this->PredictRaw(data, out_preds, ntree_limit);
+      this->PredictRaw(data, out_preds, training, ntree_limit);
       if (!output_margin) {
         obj_->PredTransform(out_preds);
       }
@@ -757,13 +833,15 @@ class LearnerImpl : public Learner {
    * \param out_preds output vector that stores the prediction
    * \param ntree_limit limit number of trees used for boosted tree
    *   predictor, when it equals 0, this means we are using all the trees
+   * \param training allow dropout when the DART booster is being used
    */
   void PredictRaw(DMatrix* data, HostDeviceVector<bst_float>* out_preds,
+                  bool training,
                   unsigned ntree_limit = 0) const {
     CHECK(gbm_ != nullptr)
         << "Predict must happen after Load or configuration";
     this->ValidateDMatrix(data);
-    gbm_->PredictBatch(data, out_preds, ntree_limit);
+    gbm_->PredictBatch(data, out_preds, training, ntree_limit);
   }
 
   void ConfigureObjective(LearnerTrainParam const& old, Args* p_args) {
@@ -849,6 +927,25 @@ class LearnerImpl : public Learner {
           << "groups size: "  << info.group_ptr_.size() -1 << ", "
           << "num rows: "     << p_fmat->Info().num_row_   << "\n"
           << "Number of weights should be equal to number of groups in ranking task.";
+    }
+
+    auto const row_based_split = [this]() {
+      return tparam_.dsplit == DataSplitMode::kRow ||
+             tparam_.dsplit == DataSplitMode::kAuto;
+    };
+    bool const valid_features =
+        !row_based_split() ||
+        (learner_model_param_.num_feature == p_fmat->Info().num_col_);
+    std::string const msg {
+      "Number of columns does not match number of features in booster."
+    };
+    if (generic_parameters_.validate_features) {
+      CHECK_EQ(learner_model_param_.num_feature, p_fmat->Info().num_col_) << msg;
+    } else if (!valid_features) {
+      // Remove this and make the equality check fatal once spark can fix all failing tests.
+      LOG(WARNING) << msg << " "
+                   << "Columns: " << p_fmat->Info().num_col_ << " "
+                   << "Features: " << learner_model_param_.num_feature;
     }
   }
 

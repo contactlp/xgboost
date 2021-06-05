@@ -1,3 +1,4 @@
+// TODO: This file help to understand entire C++ code, so read.
 /*!
  * Copyright 2019 XGBoost contributors
  *
@@ -65,7 +66,7 @@ int main(int argc, char** argv) {
   const float* out_result = NULL;
   int n_print = 10;
 
-  safe_xgboost(XGBoosterPredict(booster, dtest, 0, 0, &out_len, &out_result));
+  safe_xgboost(XGBoosterPredict(booster, dtest, 0, 0, 0, &out_len, &out_result));
   printf("y_pred: ");
   for (int i = 0; i < n_print; ++i) {
     printf("%1.4f ", out_result[i]);

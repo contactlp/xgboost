@@ -5,6 +5,7 @@ import tempfile
 import os
 import shutil
 import pytest
+import unittest
 
 rng = np.random.RandomState(1994)
 
@@ -96,6 +97,7 @@ def test_ranking():
     valid_data = xgb.DMatrix(x_valid, y_valid)
     test_data = xgb.DMatrix(x_test)
     train_data.set_group(train_group)
+    assert train_data.get_label().shape[0] == x_train.shape[0]
     valid_data.set_group(valid_group)
 
     params_orig = {'tree_method': 'exact', 'objective': 'rank:pairwise',
@@ -695,3 +697,39 @@ def test_XGBClassifier_resume():
 
         assert np.any(pred1 != pred2)
         assert log_loss1 > log_loss2
+
+
+class TestBoostFromPrediction(unittest.TestCase):
+    def run_boost_from_prediction(self, tree_method):
+        from sklearn.datasets import load_breast_cancer
+        X, y = load_breast_cancer(return_X_y=True)
+        model_0 = xgb.XGBClassifier(
+            learning_rate=0.3, random_state=0, n_estimators=4,
+            tree_method=tree_method)
+        model_0.fit(X=X, y=y)
+        margin = model_0.predict(X, output_margin=True)
+
+        model_1 = xgb.XGBClassifier(
+            learning_rate=0.3, random_state=0, n_estimators=4,
+            tree_method=tree_method)
+        model_1.fit(X=X, y=y, base_margin=margin)
+        predictions_1 = model_1.predict(X, base_margin=margin)
+
+        cls_2 = xgb.XGBClassifier(
+            learning_rate=0.3, random_state=0, n_estimators=8,
+            tree_method=tree_method)
+        cls_2.fit(X=X, y=y)
+        predictions_2 = cls_2.predict(X)
+        assert np.all(predictions_1 == predictions_2)
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_boost_from_prediction_hist(self):
+        self.run_boost_from_prediction('hist')
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_boost_from_prediction_approx(self):
+        self.run_boost_from_prediction('approx')
+
+    @pytest.mark.skipif(**tm.no_sklearn())
+    def test_boost_from_prediction_exact(self):
+        self.run_boost_from_prediction('exact')
