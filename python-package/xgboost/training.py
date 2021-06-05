@@ -35,6 +35,8 @@ def _train_internal(params, dtrain,
                       model_file=xgb_model)
         nboost = len(bst.get_dump())
 
+        print("test")
+
     _params = dict(params) if isinstance(params, list) else params
 
     if 'num_parallel_tree' in _params:

@@ -89,7 +89,7 @@ class RegLossObj : public ObjFunction {
             // If there is an incorrect label, the host code will know.
             _label_correct[0] = 0;
           }
-          _out_gpair[_idx] = GradientPair(Loss::FirstOrderGradient(p, label) * w,
+          _out_gpair[f] = GradientPair(Loss::FirstOrderGradient(p, label) * w,
                                           Loss::SecondOrderGradient(p, label) * w);
         },
         common::Range{0, static_cast<int64_t>(ndata)}, device).Eval(
