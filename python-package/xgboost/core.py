@@ -1221,7 +1221,7 @@ class Booster(object):
         for key, val in params:
             _check_call(_LIB.XGBoosterSetParam(self.handle, c_str(key), c_str(str(val))))
 
-    def update(self, dtrain, iteration, fobj=None):
+    def update(self, dtrain, iteration, y_train=None, deleteSHAPValue=None, fobj=None):
         """Update for one iteration, with objective function calculated
         internally.  This function should not be called directly by users.
 
@@ -1248,7 +1248,11 @@ class Booster(object):
         else:
             pred = self.predict(dtrain, training=True)
             # delete SHAP , get new pred
-            grad, hess = fobj(pred, dtrain)
+            print("Prediction in sample is {}".format(pred[:10]))
+            print("SHAP from this feature in sample is {}".format(deleteSHAPValue[:10]))
+            pred -= deleteSHAPValue
+            print("Prediction after delete SHAP in sample is {}".format(pred[:10]))
+            grad, hess = fobj(pred, y_train)
             self.boost(dtrain, grad, hess)
 
     def boost(self, dtrain, grad, hess):

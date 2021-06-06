@@ -12,7 +12,7 @@ from . import callback
 def _train_internal(params, dtrain,
                     num_boost_round=10, evals=(),
                     obj=None, feval=None,
-                    xgb_model=None, callbacks=None):
+                    xgb_model=None, callbacks=None, transfer=False, y_train=None, deleteSHAPValue=None):
     """internal training function"""
     callbacks = [] if callbacks is None else callbacks
     evals = list(evals)
@@ -30,12 +30,25 @@ def _train_internal(params, dtrain,
     nboost = 0
     num_parallel_tree = 1
 
-    if xgb_model is not None:
+    # If tranfer is True, we need to delete some nonmodifiable feature's SHAP from prediction
+    if transfer == True and xgb_model is not None:
+        print("Start transfer...")
         bst = Booster(params, [dtrain] + [d[0] for d in evals],
                       model_file=xgb_model)
         nboost = len(bst.get_dump())
 
-        print("test")
+        bst.update(dtrain=dtrain, iteration=0, y_train=y_train, deleteSHAPValue=deleteSHAPValue, fobj=calculateGradientByLogisticClassification)
+        num_boost_round -= 1
+
+        nboost += 1
+        print("Finish transfer...")
+
+    elif xgb_model is not None:
+        bst = Booster(params, [dtrain] + [d[0] for d in evals],
+                      model_file=xgb_model)
+        nboost = len(bst.get_dump())
+
+        # print("test")
 
     _params = dict(params) if isinstance(params, list) else params
 
@@ -71,7 +84,7 @@ def _train_internal(params, dtrain,
         # Distributed code: need to resume to this point.
         # Skip the first update if it is a recovery step.
         if version % 2 == 0:
-            bst.update(dtrain, i, obj)
+            bst.update(dtrain=dtrain, iteration=i, fobj=obj)
             bst.save_rabit_checkpoint()
             version += 1
 
@@ -114,7 +127,7 @@ def _train_internal(params, dtrain,
 
 def train(params, dtrain, num_boost_round=10, evals=(), obj=None, feval=None,
           maximize=False, early_stopping_rounds=None, evals_result=None,
-          verbose_eval=True, xgb_model=None, callbacks=None):
+          verbose_eval=True, xgb_model=None, callbacks=None, transfer=False, y_train=None, deleteSHAPValue=None):
     # pylint: disable=too-many-statements,too-many-branches, attribute-defined-outside-init
     """Train a booster with given parameters.
 
@@ -206,7 +219,7 @@ def train(params, dtrain, num_boost_round=10, evals=(), obj=None, feval=None,
                            num_boost_round=num_boost_round,
                            evals=evals,
                            obj=obj, feval=feval,
-                           xgb_model=xgb_model, callbacks=callbacks)
+                           xgb_model=xgb_model, callbacks=callbacks, transfer=transfer, y_train=y_train, deleteSHAPValue=deleteSHAPValue)
 
 def calculateGradientByLogisticClassification(pred, y_train):
     """
