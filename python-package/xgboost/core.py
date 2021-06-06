@@ -1221,6 +1221,12 @@ class Booster(object):
         for key, val in params:
             _check_call(_LIB.XGBoosterSetParam(self.handle, c_str(key), c_str(str(val))))
 
+    def Sigmoid(self , score):
+        return 1 / (1 + np.exp(-score))
+
+    def convertSigmoid(self , pred):
+        return np.log(pred / (1 - pred))
+
     def update(self, dtrain, iteration, y_train=None, deleteSHAPValue=None, fobj=None):
         """Update for one iteration, with objective function calculated
         internally.  This function should not be called directly by users.
@@ -1249,9 +1255,13 @@ class Booster(object):
             pred = self.predict(dtrain, training=True)
             # delete SHAP , get new pred
             print("Prediction in sample is {}".format(pred[:10]))
+            score = self.convertSigmoid(pred)
             print("SHAP from this feature in sample is {}".format(deleteSHAPValue[:10]))
-            pred -= deleteSHAPValue
-            print("Prediction after delete SHAP in sample is {}".format(pred[:10]))
+            print("Score after convert from sigmoid in sample is {}".format(score[:10]))
+            score -= deleteSHAPValue
+            print("Score after delete SHAP in sample is {}".format(score[:10]))
+            pred = self.Sigmoid(score)
+            print("Prediction after sigmoid in sample is {}".format(pred[:10]))
             grad, hess = fobj(pred, y_train)
             self.boost(dtrain, grad, hess)
 

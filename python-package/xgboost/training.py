@@ -32,7 +32,9 @@ def _train_internal(params, dtrain,
 
     # If tranfer is True, we need to delete some nonmodifiable feature's SHAP from prediction
     if transfer == True and xgb_model is not None:
-        print("Start transfer...")
+
+        print("----------------------------------------------------------------------------")
+        print("\nStart transfer...\n")
         bst = Booster(params, [dtrain] + [d[0] for d in evals],
                       model_file=xgb_model)
         nboost = len(bst.get_dump())
@@ -41,14 +43,13 @@ def _train_internal(params, dtrain,
         num_boost_round -= 1
 
         nboost += 1
-        print("Finish transfer...")
+        print("\nFinish transfer...\n")
+        print("----------------------------------------------------------------------------")
 
     elif xgb_model is not None:
         bst = Booster(params, [dtrain] + [d[0] for d in evals],
                       model_file=xgb_model)
         nboost = len(bst.get_dump())
-
-        # print("test")
 
     _params = dict(params) if isinstance(params, list) else params
 
