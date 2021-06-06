@@ -231,11 +231,13 @@ def calculateGradientByLogisticClassification(pred, y_train):
 
     # Caluculate first order gradient
     firstOrderGradient = pred - y_train
+    print('FirstOrderGradient \'s type is {} .'.format(type(firstOrderGradient)))
     print('FirstOrderGradient is {} .'.format(firstOrderGradient[:10]))
 
     # Caluculate second order gradient
     eps = 1e-16
-    secondOrderGradient = max(pred * (1.0 - pred) , np.ones((1,len(pred))) * eps)
+    secondOrderGradient = np.maximum(pred * (1.0 - pred) , list(np.ones((1,len(pred))) * eps)).tolist()
+    print('SecondOrderGradient \'s type is {} .'.format(type(secondOrderGradient)))
     print('SecondOrderGradient is {} .'.format(secondOrderGradient[:10]))
 
     return firstOrderGradient , secondOrderGradient
