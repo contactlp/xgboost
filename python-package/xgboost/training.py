@@ -236,7 +236,7 @@ def calculateGradientByLogisticClassification(pred, y_train):
 
     # Caluculate second order gradient
     eps = 1e-16
-    secondOrderGradient = np.maximum(pred * (1.0 - pred) , list(np.ones((1,len(pred))) * eps)).tolist()
+    secondOrderGradient = (np.maximum(pred * (1.0 - pred) , list(np.ones((1,len(pred))) * eps)).tolist())[0]
     print('SecondOrderGradient \'s type is {} .'.format(type(secondOrderGradient)))
     print('SecondOrderGradient is {} .'.format(secondOrderGradient[:10]))
 
