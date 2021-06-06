@@ -1247,6 +1247,7 @@ class Booster(object):
                                                     dtrain.handle))
         else:
             pred = self.predict(dtrain, training=True)
+            # delete SHAP , get new pred
             grad, hess = fobj(pred, dtrain)
             self.boost(dtrain, grad, hess)
 

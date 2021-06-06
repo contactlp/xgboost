@@ -208,6 +208,23 @@ def train(params, dtrain, num_boost_round=10, evals=(), obj=None, feval=None,
                            obj=obj, feval=feval,
                            xgb_model=xgb_model, callbacks=callbacks)
 
+def calculateGradientByLogisticClassification(pred, y_train):
+    """
+    Caluculate gradient ( First Order and Second Order ).
+    input:
+        pred : probability of model prediction (after sigmoid)
+        dtrain : data
+    """
+
+    # Caluculate first order gradient
+    firstOrderGradient = pred - y_train
+
+    # Caluculate second order gradient
+    eps = 1e-16
+    secondOrderGradient = max(pred * (1.0 - pred) , eps)
+
+    return firstOrderGradient , secondOrderGradient
+
 
 class CVPack(object):
     """"Auxiliary datastruct to hold one fold of CV."""
