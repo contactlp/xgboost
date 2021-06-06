@@ -1,4 +1,4 @@
-DMLC_DECLARE_FIELD/*!
+/*!
  *  Copyright (c) 2015 by Contributors
  * \file c_api_error.h
  * \brief Error handling for C API.
